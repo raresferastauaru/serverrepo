@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.FileSystems;
 
 import java.util.*;
+import java.lang.*;
 
 public class Server {    
     private static int socketNo = 4444;
@@ -16,6 +17,7 @@ public class Server {
     private static InputStream socketInputStream = null;
     private static OutputStream socketOutputStream = null;
     private static DAL dal = new DAL();
+    private static String RootPath = "/home/rares/SyncRootDirectory";
 
     public static void main(String[] args) throws Exception 
     {
@@ -39,7 +41,7 @@ public class Server {
             }
         }
         catch(Exception ex) {
-            System.out.println(ex);
+            System.out.println(ex.getMessage());
         }
 
         socketInputStream.close();
@@ -90,7 +92,7 @@ public class Server {
         else if(parts[0].equals(CommandTypes.PUT.toString()))
         {
             readData = CommandPUT(parts[1], Integer.parseInt(parts[2]));
-            //System.out.println("PUT state: " + readData);
+            System.out.println("PUT state: " + readData);
         }
         else if(parts[0].equals(CommandTypes.RENAME.toString()))
         {
@@ -122,7 +124,7 @@ public class Server {
             
             int count;
             byte[] bytes = new byte[256*1024];
-            fileName = System.getProperty("user.dir") + "/dataSource/" + fileName;
+            fileName = RootPath + fileName;
             File sourceFile = new File(fileName);
 
             if(!sourceFile.exists()) {
@@ -144,7 +146,7 @@ public class Server {
                 return true;
             }
         } catch (IOException ex) {
-                System.out.println("CommandGET: " + ex);
+            System.out.println("CommandGET: " + ex);
         }
 
         return false;
@@ -153,19 +155,16 @@ public class Server {
     private static boolean CommandPUT(String fileName, Integer bytesToRead)
     {
         //if(enoughSpaceOnHdd)                                                      //!!!!!!!!!!!!
+       
         WriteToClient("ACKNOWLEDGE");
-
-        boolean readingData = true;
         byte[] buffer = new byte[bytesToRead];
-        OutputStream out;
         
-        Integer bytesRead = 0;
-        Integer bytesLeft = bytesToRead;
-        Integer nextPacketSize;
-        Integer bufferLength;
-        Integer bufferSize = 1536;
         try {
+        	boolean readingData = true;
+        	Integer bytesRead = 0, bytesLeft = bytesToRead, nextPacketSize;
+        	Integer bufferLength, bufferSize = 1536;
             long startingTime = System.currentTimeMillis();
+            
             while(readingData)
             {
                 nextPacketSize = (bytesLeft > bufferSize) ? bufferSize : bytesLeft;
@@ -188,8 +187,8 @@ public class Server {
                 }
             }
 
-            fileName = System.getProperty("user.dir") + "/dataSource/" + fileName;
-            out = new FileOutputStream(fileName);
+            fileName = RootPath + fileName;
+            OutputStream out = new FileOutputStream(fileName);
             out.write(buffer, 0, buffer.length);
 
             WriteToClient("ACKNOWLEDGE");
@@ -206,7 +205,6 @@ public class Server {
             else
             {
             	WriteToClient("Error: FileHash wasn't sent.");
-            	// ??? Delete the file and send again ? Or resend the FileHash
             }
 
             out.close();            
@@ -220,42 +218,48 @@ public class Server {
     
     private static boolean CommandRENAME(String oldFileName, String newFileName)
     {
+    	try {
+	        String oldFilePath = RootPath + oldFileName;
+	        String newFilePath = RootPath + newFileName;
 
-        String oldFilePath = System.getProperty("user.dir") + "/dataSource/" + oldFileName;
-        String newFilePath = System.getProperty("user.dir") + "/dataSource/" + newFileName;
+	        File oldFile = new File(oldFilePath);
+	        File newFile = new File(newFilePath);   
 
-        File oldFile = new File(oldFilePath);
-        File newFile = new File(newFilePath);   
-        
+	        if(oldFile.exists())
+	        {
+	            WriteToClient("ACKNOWLEDGE");
+	            
+	            if(oldFile.renameTo(newFile))
+	            {
+	            	Thread.sleep(10);
+	            	System.out.println("File " + oldFileName + " was successfully renamed to " + newFileName);
+	            	WriteToClient("ACKNOWLEDGE");
+	                return true;
+	            }
 
-        if(oldFile.exists())
-        {
-            WriteToClient("ACKNOWLEDGE");
-            
-            if(oldFile.renameTo(newFile))
-            {
-                //WriteToClient("Succes: file " + oldFileName + " renamed to " + newFileName);
-                return true;
-            }
-
-            WriteToClient("Error: failed to rename the file " + oldFileName + " to " + newFileName);
+	            WriteToClient("Error: failed to rename the file " + oldFileName + " to " + newFileName);
+	            return false;
+	        }
+	        else if(newFile.exists())
+	        {
+	            WriteToClient("Error: Can't rename the file to the new name because a file with the new desired name already exists!");
+	            return false;
+	        }
+	        else
+	        {
+	            WriteToClient("File " + oldFileName + " doesn't exists!");
+	            return false;
+	        }
+	    } catch (Exception ex) {
+            System.out.println("CommandPUT: " + ex);
             return false;
-        }
-        else if(newFile.exists())
-        {
-            WriteToClient("Error: Can't rename the file to the new name because a file with the new desired name already exists!");
-            return false;
-        }
-        else
-        {
-            WriteToClient("File " + oldFileName + " doesn't exists!");
-            return false;
-        }
+	    }
     }
     
     private static boolean CommandDELETE(String fileName)
     {
-        File fileToDelete = new File(System.getProperty("user.dir") + "/dataSource/", fileName);
+    	String filePath = RootPath + fileName;
+        File fileToDelete = new File(filePath);
                 
         try {
             if(fileToDelete.isDirectory())
@@ -286,7 +290,7 @@ public class Server {
         boolean directoryCreated = false;
 
         try{      
-            String fullPath = System.getProperty("user.dir") + "/dataSource/" + folderName;
+            String fullPath = RootPath + folderName;
             File file = new File(fullPath);
             directoryCreated = file.mkdir();
 
