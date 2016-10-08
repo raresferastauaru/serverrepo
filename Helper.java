@@ -6,7 +6,7 @@ public class Helper
 
 	public static String getSyncLocation()
 	{
-	    return "/share/SyncRoot";
+	    return "/home/rares/SyncRootDirectory";
 	}
 	public static String getSpecificPath(String fullPath, String fixedPath)
 	{

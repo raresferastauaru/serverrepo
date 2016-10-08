@@ -2,17 +2,25 @@ import java.sql.*;
 
 public class DAL
 {
+	private int USERID = 1;
 	Connection connection;
 
-	String insertUserQuery = "INSERT INTO Users(UserName, UserPassword) VALUES(?, ?)";
-	String insertFileHashQuery = "INSERT INTO FileHashes(FullPath, RelativePath, HashCode) VALUES(?, ?, ?)";
-	String selectUsersPasswordQuery = "SELECT UserPassword FROM Users WHERE UserName = ?";
 	String selectFileHashesQuery = "SELECT * FROM FileHashes";
 
 	Statement statement;
+
+	String insertUserQuery = "INSERT INTO Users(UserName, UserPassword) VALUES(?, ?)";
 	PreparedStatement insertUserPreparedStatement;
+
+	String insertFileHashQuery = "INSERT INTO FileHashes(RelativePath, HashCode) VALUES(?, ?)";
 	PreparedStatement insertFileHashPreparedStatement;
+
+	String selectUsersPasswordQuery = "SELECT UserPassword FROM Users WHERE UserName = ?";
 	PreparedStatement selectUsersPasswordPreparedStatement;
+
+	String updateFileHashCodeQuery = "{CALL UpdateFileHashCode(?, ?, ?)}";
+  String updateFileHashRelativePathQuery = "{CALL UpdateFileHashRelativePath(?, ?)}";
+	CallableStatement callableStatement;
 
 	public DAL()
 	{
@@ -65,19 +73,34 @@ public class DAL
 		}
 	}
 
-	public void InsertNewFileHash(String fullPath, String relativePath, String hashCode)
+	public void UpdateFileHashCode(String relativePath, String hashCode)
+	{
+		int hashCodeInt = Integer.parseInt(hashCode);
+
+		try
+		{
+	    callableStatement = connection.prepareCall(updateFileHashCodeQuery);
+			callableStatement.setString(1, relativePath);
+			callableStatement.setInt(2, hashCodeInt);
+			callableStatement.setInt(3, USERID);
+
+			callableStatement.execute();
+		} catch (Exception e) {
+			System.err.println("Update file hash exception: " + e.getMessage());
+		}
+	}
+ 
+  public void UpdateFileHashRelativePath(String oldRelativePath, String newRelativePath)
 	{
 		try
 		{
-			insertFileHashPreparedStatement.setString(1, fullPath);
-			insertFileHashPreparedStatement.setString(2, relativePath);
-			insertFileHashPreparedStatement.setString(3, hashCode);
+	    callableStatement = connection.prepareCall(updateFileHashRelativePathQuery);
+			callableStatement.setString(1, oldRelativePath);
+			callableStatement.setString(2, newRelativePath);
 
-			insertFileHashPreparedStatement.execute();
-		}
-		catch (Exception e)
-		{
-			System.err.println("Insert new file hash exception: " + e.getMessage());
+			callableStatement.execute();
+		} catch (Exception e) {
+			System.err.println("Update file hash exception: " + e.getMessage());
 		}
 	}
 
@@ -94,11 +117,19 @@ public class DAL
 		}
 	}
 
-	public ResultSet GetFileHashes()
+	public String GetFileHashes()
 	{
 		try
 		{
-	  		return statement.executeQuery(selectFileHashesQuery);
+            String fileHashes = "";
+
+	  		ResultSet rs = statement.executeQuery(selectFileHashesQuery);
+			while (rs.next())
+			{
+				fileHashes += rs.getString("RelativePath") + ":" + rs.getString("HashCode") + ":" + rs.getString("OldHashCode") + "|";
+			}
+
+			return fileHashes;
 		}
 		catch (Exception e)
 		{

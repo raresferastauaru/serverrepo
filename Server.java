@@ -17,7 +17,7 @@ public class Server {
     private static InputStream socketInputStream = null;
     private static OutputStream socketOutputStream = null;
     private static DAL dal = new DAL();
-    private static String RootPath = "/home/rares/SyncRootDirectory";
+    private static String RootPath = Helper.getSyncLocation();
 
     public static void main(String[] args) throws Exception 
     {
@@ -89,6 +89,11 @@ public class Server {
             readData = CommandGET(parts[1]);
             System.out.println("GET state: " + readData);
         }
+        if(parts[0].equals(CommandTypes.GETFileHashes.toString()))
+        {
+            readData = CommandGETFileHashes();
+            System.out.println("GETFileHashes state: " + readData);
+        }
         else if(parts[0].equals(CommandTypes.PUT.toString()))
         {
             readData = CommandPUT(parts[1], Integer.parseInt(parts[2]));
@@ -152,6 +157,34 @@ public class Server {
         return false;
     }
 
+    private static boolean CommandGETFileHashes()
+    {
+        try {
+            //WriteToClient("ACKNOWLEDGE");
+        	//Thread.sleep(50);
+            
+            System.out.println("Geting the FileHashes.");
+            String fileHashes = dal.GetFileHashes();
+
+            if(!fileHashes.equals(""))
+            {
+            	byte[] fileHashesBytes = fileHashes.getBytes();
+            	socketOutputStream.write(fileHashesBytes, 0, fileHashesBytes.length);
+	            
+	            return true;
+            }
+			else
+			{
+				System.out.println("Error: There are no FileHashes stored on the server.");
+                WriteToClient("Error: There are no FileHashes stored on the server.");
+			}
+        } catch (Exception ex) {
+            System.out.println("CommandGETFileHashes: " + ex);
+        }
+
+        return false;
+    }
+
     private static boolean CommandPUT(String fileName, Integer bytesToRead)
     {
         //if(enoughSpaceOnHdd)                                                      //!!!!!!!!!!!!
@@ -198,8 +231,8 @@ public class Server {
             String[] parts = fileHashString.split(":");
             if(parts[0].equals("FileHash"))
             {
-                dal.InsertNewFileHash(fileName, Helper.getRelativePath(fileName), parts[1]);
-                System.out.println("FileHash has been registred successfully.");
+                dal.UpdateFileHashCode(Helper.getRelativePath(fileName), parts[1]);
+                System.out.println("FileHash(" + Helper.getRelativePath(fileName) + ", " + parts[1] + ") has been registred successfully.");
             	WriteToClient("ACKNOWLEDGE");
             }
             else
@@ -232,6 +265,7 @@ public class Server {
 	            if(oldFile.renameTo(newFile))
 	            {
 	            	Thread.sleep(10);
+                	dal.UpdateFileHashRelativePath(oldFileName, newFileName);
 	            	System.out.println("File " + oldFileName + " was successfully renamed to " + newFileName);
 	            	WriteToClient("ACKNOWLEDGE");
 	                return true;
