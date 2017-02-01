@@ -1,9 +1,5 @@
-import java.io.*;
-import java.util.*;
-
 public class Helper
 {
-
 	public static String getSyncLocation()
 	{
 	    return "/home/rares/SyncRootDirectory";

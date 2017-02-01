@@ -7,3 +7,4 @@ public enum CommandTypes {
 	MKDIR,
 	KILL
 }
+
