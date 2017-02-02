@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 
 public class DAL {
 	Connection connection;
-
-	 
 	PreparedStatement preparedStatement;
 	CallableStatement callableStatement;
 

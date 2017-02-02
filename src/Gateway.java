@@ -11,7 +11,7 @@ public class Gateway {
 
 	// FILE HASHES //
 	private String selectFileHashesQuery = "SELECT * FROM FileHashes WHERE UserId = ?";
-	public String GetFileHashes()
+	public String GetAllFileHashesForUser()																		// return Array list of fileHash/fileHashDetails
 	{
 		SqlParam[] sqlParams = new SqlParam[1];
 		sqlParams[0] = new SqlParam("Integer", USERID);
@@ -35,8 +35,9 @@ public class Gateway {
 
 		return fileHashesString;
 	}
+	
 	private String selectFileHashQuery = "SELECT * FROM FileHashes WHERE UserId = ? AND RelativePath = ?";
-	public String GetFileHash(String relativePath) {
+	public String GetFileHash(String relativePath) {															// return fileHash/fileHashDetails
 		SqlParam[] sqlParams = new SqlParam[2];
 		sqlParams[0] = new SqlParam("Integer", USERID);
 		sqlParams[1] = new SqlParam("String", relativePath);
@@ -59,6 +60,7 @@ public class Gateway {
 
 		return fileHashString;
 	}
+	
 	private String updateFileHashCodeStoredProcedure = "{CALL UpdateFileHashCode(?, ?, ?, ?, ?, ?)}";
 	public void UpdateFileHashCode(String relativePath, FileHashDetails fileHashDetails)
 	{
@@ -73,6 +75,7 @@ public class Gateway {
 		
 		_dal.RunSpReturnRs(updateFileHashCodeStoredProcedure, sqlParams);
 	}
+	
 	private String updateFileHashRelativePathStoredProcedure = "{CALL UpdateFileHashRelativePath(?, ?, ?)}";
 	private String updateFileHashDirectoryRelativePathStoredProcedure = "{CALL UpdateFileHashDirectoryRelativePath(?, ?, ?)}";
 	public void UpdateFileHashRelativePath(String oldRelativePath, String newRelativePath, boolean isDirectory)
@@ -91,6 +94,7 @@ public class Gateway {
 			_dal.RunSpReturnRs(updateFileHashRelativePathStoredProcedure, sqlParams);
 		}
 	}
+	
 	private String deleteFileHashCodeQuery = "DELETE FROM FileHashes WHERE RelativePath = ? AND UserId = ?";
 	private String deleteDirectoryHashCodesQuery = "DELETE FROM FileHashes WHERE RelativePath LIKE ? AND UserId = ?";
 	public void DeleteFileHashCode(String relativePath, boolean isDirectory) {
@@ -108,6 +112,7 @@ public class Gateway {
 			_dal.RunQueryReturnRs(deleteFileHashCodeQuery, sqlParams);
 		}
 	}
+	
 	
 
 	// USERS //

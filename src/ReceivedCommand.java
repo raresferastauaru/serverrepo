@@ -22,7 +22,7 @@ public class ReceivedCommand {
     {
         try {
             System.out.println("Geting the FileHashes.");
-            String fileHashes = gateway.GetFileHashes();
+            String fileHashes = gateway.GetAllFileHashesForUser();
 
             if(!fileHashes.equals(""))
             {
@@ -46,7 +46,7 @@ public class ReceivedCommand {
 	public boolean CommandGET(String fileName)
     {
         try {
-            System.out.println("Geting the file: " + fileName);
+        	System.out.println("Geting the file: " + fileName);
 
             int count;
             String filePath = RootPath + fileName;
@@ -60,7 +60,8 @@ public class ReceivedCommand {
             }
             else {
             	String fileDetails = gateway.GetFileHash(fileName);
-            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
+            	// append from db: creationTime - Ticks?,  lastWriteTime - Ticks ?, isReadOnly
+            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");   // check if fileDetails contains those details
                   
                 InputStream fileInputStream = new FileInputStream(sourceFile);
                 byte[] bytes = new byte[1024];
@@ -205,7 +206,7 @@ public class ReceivedCommand {
         try {
             if(fileToDelete.isDirectory())
             {
-                boolean directoryDeleted = deleteDirectory(fileToDelete);
+                boolean directoryDeleted = DeleteDirectory(fileToDelete);
                 if(directoryDeleted) {
                 	gateway.DeleteFileHashCode(fileName, true); 				// Cum tratam cazurile de stergere de DIR in DB ?
                 																// Ma gandesc la un WHERE RelativePath LIKE 'relPath%' !!!
@@ -253,24 +254,8 @@ public class ReceivedCommand {
         return directoryCreated;
     }
 
-	public boolean deleteDirectory(File path)
-    {
-        if( path.exists() ) {
-          File[] files = path.listFiles();
-          for(int i=0; i<files.length; i++) {
-             if(files[i].isDirectory()) {
-               deleteDirectory(files[i]);
-             }
-             else {
-               files[i].delete();
-             }
-          }
-        }
-        return( path.delete() );
-    }
-
 	
-	public void WriteToClient(String message)
+	private void WriteToClient(String message)
     {
         try {
             byte[] messageBytes = message.getBytes();
@@ -279,5 +264,21 @@ public class ReceivedCommand {
         catch(Exception ex){
             System.out.println(ex.getMessage());
         }
+    }
+
+	private boolean DeleteDirectory(File path)
+    {
+        if( path.exists() ) {
+          File[] files = path.listFiles();
+          for(int i=0; i<files.length; i++) {
+             if(files[i].isDirectory()) {
+               DeleteDirectory(files[i]);
+             }
+             else {
+               files[i].delete();
+             }
+          }
+        }
+        return( path.delete() );
     }
 }
