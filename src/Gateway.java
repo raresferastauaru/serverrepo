@@ -11,7 +11,8 @@ public class Gateway {
 
 	// FILE HASHES //
 	private String selectFileHashesQuery = "SELECT * FROM FileHashes WHERE UserId = ?";
-	public String GetAllFileHashesForUser()																		// return Array list of fileHash/fileHashDetails
+	// return Array list of fileHash/fileHashDetails
+	public String GetAllFileHashesForUser()
 	{
 		SqlParam[] sqlParams = new SqlParam[1];
 		sqlParams[0] = new SqlParam("Integer", USERID);
@@ -22,10 +23,10 @@ public class Gateway {
 		try {
 			while (rs.next())
 			{
-				fileHashesString += rs.getString("RelativePath") + ":"
-											+ rs.getString("OldRelativePath") + ":"
-											+ rs.getString("HashCode") + ":"
-											+ rs.getString("OldHashCode") + "|";
+				fileHashesString += rs.getString("RelativePath") + ":" + 
+									rs.getString("OldRelativePath") + ":" + 
+									rs.getString("HashCode") + ":" + 
+									rs.getString("OldHashCode") + "|";
 			}
 		} catch (SQLException e) {
 			//e.printStackTrace();
@@ -37,7 +38,8 @@ public class Gateway {
 	}
 	
 	private String selectFileHashQuery = "SELECT * FROM FileHashes WHERE UserId = ? AND RelativePath = ?";
-	public String GetFileHash(String relativePath) {															// return fileHash/fileHashDetails
+	// return fileHash/fileHashDetails
+	public String GetFileHash(String relativePath) {
 		SqlParam[] sqlParams = new SqlParam[2];
 		sqlParams[0] = new SqlParam("Integer", USERID);
 		sqlParams[1] = new SqlParam("String", relativePath);
@@ -88,10 +90,12 @@ public class Gateway {
 		if(isDirectory) 
 		{
 			_dal.RunSpReturnRs(updateFileHashDirectoryRelativePathStoredProcedure, sqlParams);
+			System.out.println("Directory " + oldRelativePath + " renamed in database succesfully to " + newRelativePath + ".");
 		}
 		else
 		{			
 			_dal.RunSpReturnRs(updateFileHashRelativePathStoredProcedure, sqlParams);
+			System.out.println("File " + oldRelativePath + " renamed in database succesfully to " + newRelativePath + ".");
 		}
 	}
 	

@@ -1,16 +1,16 @@
 public class FileHash
 {
 	private Integer _hashId;
+    private Integer _hashCode;
     private String _fullPath;
     private String _relativePath;
-    private Integer _hashCode;
 
     public FileHash(Integer hashId, Integer hashCode, String fullPath)
     {
     	_hashId = hashId;
+        _hashCode = hashCode;
         _fullPath = fullPath;
         _relativePath = Helper.getRelativePath(_fullPath);
-        _hashCode = hashCode;
     }
 
     public Integer getHashId()

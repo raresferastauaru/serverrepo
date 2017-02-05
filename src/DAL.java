@@ -45,7 +45,6 @@ public class DAL {
 	{
 		return RunQueryReturnRs(query, new SqlParam[0]);
 	}
-	
 	public ResultSet RunQueryReturnRs(String query,  SqlParam[] sqlParams)
     {
 		ResultSet rs = null;
@@ -78,8 +77,13 @@ public class DAL {
         return rs;
     }
 	
+	
+	public ResultSet RunSpReturnRs(String storedProcedure)
+	{
+		return RunSpReturnRs(storedProcedure, new SqlParam[0]);
+	}
 	public ResultSet RunSpReturnRs(String storedProcedure,  SqlParam[] sqlParams)
-    {
+	{
 		ResultSet rs = null;
 		try {
 			callableStatement = connection.prepareCall(storedProcedure);

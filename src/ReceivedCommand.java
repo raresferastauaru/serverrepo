@@ -60,8 +60,7 @@ public class ReceivedCommand {
             }
             else {
             	String fileDetails = gateway.GetFileHash(fileName);
-            	// append from db: creationTime - Ticks?,  lastWriteTime - Ticks ?, isReadOnly
-            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");   // check if fileDetails contains those details
+            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
                   
                 InputStream fileInputStream = new FileInputStream(sourceFile);
                 byte[] bytes = new byte[1024];
@@ -80,6 +79,7 @@ public class ReceivedCommand {
         return false;
     }
 
+	// https://www.mkyong.com/java/how-to-append-content-to-file-in-java/
 	public boolean CommandPUT(String fileName, Integer bytesToRead)
     {
         //if(enoughSpaceOnHdd)//!!!!!!!!!!!!
@@ -128,6 +128,7 @@ public class ReceivedCommand {
             if(parts[0].equals("FileHashDetails"))
             {
             	FileHashDetails fileHashDetails = new FileHashDetails(parts[1],parts[2],parts[3],parts[4]);
+            	System.out.println("PUT - FileHashDetails: " + fileHashDetails.toString());
             	gateway.UpdateFileHashCode(Helper.getRelativePath(fileName), fileHashDetails);
             	
                 System.out.println("FileHash(" + Helper.getRelativePath(fileName) + ", " + parts[1] + ") has been registred successfully.");

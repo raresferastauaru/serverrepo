@@ -1,30 +1,40 @@
 public class FileHashDetails {
 	
-	private String hashCode;
-	private String creationTime;
-	private String lastWriteTime;
-	private String isReadOnly;
+	private String _hashCode;
+	private String _creationTime;
+	private String _lastWriteTime;
+	private String _isReadOnly;
 	
 	public FileHashDetails(String hashCode, String creationTime, String lastWriteTime, String isReadOnly) {
-		this.hashCode = hashCode;
-		this.creationTime = creationTime;
-		this.lastWriteTime = lastWriteTime;
-		this.isReadOnly = isReadOnly;
+		_hashCode = hashCode;
+		_creationTime = creationTime;
+		_lastWriteTime = lastWriteTime;
+		_isReadOnly = isReadOnly;
 	}
 
 	public String getHashCode() {
-		return hashCode;
+		return _hashCode;
 	}
 
 	public String getCreationTime() {
-		return creationTime;
+		return _creationTime;
 	}
 
 	public String getLastWriteTime() {
-		return lastWriteTime;
+		return _lastWriteTime;
 	}
 
 	public String getIsReadOnly() {
-		return isReadOnly;
+		return _isReadOnly;
 	}	
+	
+	public String toString()
+    {
+        String str = "FileHashDetails:"
+                  + _hashCode + ", "
+                  + _creationTime + ", "
+                  + _lastWriteTime + ", "
+                  + _isReadOnly + ".";
+        return str;
+    }
 }
