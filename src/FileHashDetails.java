@@ -30,11 +30,11 @@ public class FileHashDetails {
 	
 	public String toString()
     {
-        String str = "FileHashDetails:"
+        String str = "FileHash:"
                   + _hashCode + ", "
                   + _creationTime + ", "
                   + _lastWriteTime + ", "
-                  + _isReadOnly + ".";
+                  + _isReadOnly;
         return str;
     }
 }

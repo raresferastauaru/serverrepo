@@ -1,9 +1,4 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 public class ReceivedCommand {
 
@@ -11,16 +6,64 @@ public class ReceivedCommand {
     private static String RootPath = Helper.getSyncLocation();
     private InputStream socketInputStream = null;
     private OutputStream socketOutputStream = null;
-    
-	public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
+    public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
 	{
 		this.socketInputStream = socketInputStream;
 		this.socketOutputStream = socketOutputStream;
 	}
 
+	
+	
+	public boolean CommandGET(String fileName)
+    {
+        try 
+        {
+        	System.out.println("Geting the file: " + fileName);
+
+            int count;
+            String filePath = RootPath + fileName;
+            File sourceFile = new File(filePath);
+
+            if(!sourceFile.exists()) {
+                WriteToClient("Error:File doesn't exists!:");
+            }
+            else if(sourceFile.isDirectory()) {
+                WriteToClient("Error:Server can't return a directory! Probably it will never return a directory, just a specific file from a directory:");
+            }
+            else {
+            	String fileDetails = gateway.GetFileHash(fileName);
+            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
+                  
+                InputStream fileInputStream = new FileInputStream(sourceFile);
+                byte[] bytes = new byte[1536];						
+                long startingTime = System.currentTimeMillis();					// is a smaller buffer needed?
+                while ((count = fileInputStream.read(bytes, 0, 1536)) > 0) {
+                     socketOutputStream.write(bytes, 0, count);
+                }
+                
+                long miliseconds = System.currentTimeMillis() - startingTime;
+                if(miliseconds == 0) miliseconds = 1;
+                
+                long sentSize = sourceFile.length();
+                System.out.println("File " + fileName +
+                                    " was transferred with " + String.valueOf(sentSize / miliseconds) +
+                                    " bps (" + String.valueOf(sentSize) + "/" + String.valueOf(miliseconds) + ").");
+
+                fileInputStream.close();
+                return true;
+            }
+        } catch (IOException ex) {
+            System.out.println("CommandGET: ");
+        	ex.printStackTrace();
+        }
+
+        return false;
+    }
+
 	public boolean CommandGETFileHashes()
     {
-        try {
+        try 
+        {
             System.out.println("Geting the FileHashes.");
             String fileHashes = gateway.GetAllFileHashesForUser();
 
@@ -43,107 +86,79 @@ public class ReceivedCommand {
         return false;
     }
 	
-	public boolean CommandGET(String fileName)
-    {
-        try {
-        	System.out.println("Geting the file: " + fileName);
-
-            int count;
-            String filePath = RootPath + fileName;
-            File sourceFile = new File(filePath);
-
-            if(!sourceFile.exists()) {
-                WriteToClient("Error:File doesn't exists!:");
-            }
-            else if(sourceFile.isDirectory()) {
-                WriteToClient("Error:Server can't return a directory! Probably it will never return a directory, just a specific file from a directory:");
-            }
-            else {
-            	String fileDetails = gateway.GetFileHash(fileName);
-            	WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
-                  
-                InputStream fileInputStream = new FileInputStream(sourceFile);
-                byte[] bytes = new byte[1024];
-                while ((count = fileInputStream.read(bytes, 0, 1024)) > 0) {
-                     socketOutputStream.write(bytes, 0, count);
-                }
-
-                fileInputStream.close();
-                return true;
-            }
-        } catch (IOException ex) {
-            System.out.println("CommandGET: ");
-        	ex.printStackTrace();
-        }
-
-        return false;
-    }
-
-	// https://www.mkyong.com/java/how-to-append-content-to-file-in-java/
 	public boolean CommandPUT(String fileName, Integer bytesToRead)
     {
-        //if(enoughSpaceOnHdd)//!!!!!!!!!!!!
-
-        WriteToClient("ACKNOWLEDGE:");
-        byte[] buffer = new byte[bytesToRead];
-
-        try {
+        //if(notEnoughSpaceOnDisk)
+		//	WriteToClient("Error:NotEnoughSpaceOnDisk");
+		
+        String filePath = RootPath + fileName;
+        FileOutputStream fileOutputStream = null;
+        
+        try 
+        {
+        	fileOutputStream = ValidateFile(filePath);
+        	
+            WriteToClient("ACKNOWLEDGE:");
+            
+        	Integer numberOfBytesRead, bytesLeft = bytesToRead;
+        	byte[] buffer = new byte[1536];
         	boolean readingData = true;
-        	Integer bytesRead = 0, bytesLeft = bytesToRead, nextPacketSize;
-        	Integer bufferLength, bufferSize = 1536;
+        	
             long startingTime = System.currentTimeMillis();
-
             while(readingData)
             {
-                nextPacketSize = (bytesLeft > bufferSize) ? bufferSize : bytesLeft;
-
-                bufferLength = socketInputStream.read(buffer, bytesRead, nextPacketSize);
-                bytesRead += bufferLength;
-                bytesLeft -= bufferLength;
-
-                if (bytesLeft <= 0)
+                numberOfBytesRead = socketInputStream.read(buffer, 0, buffer.length);
+                System.out.println("numberOfBytesRead: " + numberOfBytesRead);
+                fileOutputStream.write(buffer, 0, numberOfBytesRead);
+                bytesLeft -= numberOfBytesRead;
+                
+                if (bytesLeft == 0)
                 {
-                    long ms = System.currentTimeMillis() - startingTime;
-
-                    if(ms == 0) ms = 1;
+                    long miliseconds = System.currentTimeMillis() - startingTime;
+                    if(miliseconds == 0) miliseconds = 1;
 
                     System.out.println("File " + fileName +
-                                        " was transferred with " + String.valueOf(bytesRead / ms) +
-                                        "(" + String.valueOf(bytesRead) + "/" + String.valueOf(ms) + ") bps.");
+	                                    " was transferred with " + String.valueOf(bytesToRead / miliseconds) +
+	                                    " bps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
 
                     readingData = false;
+                } 
+                else if(bytesLeft < 0) 
+                {
+                	System.out.println("File " + fileName + " is on bytesLeft < 0. WHY ?");
                 }
             }
-
-            fileName = RootPath + fileName;
-            OutputStream out = new FileOutputStream(fileName);
-            out.write(buffer, 0, buffer.length);
-
+            
             WriteToClient("ACKNOWLEDGE:");
             
             byte[] fileHashByte = new byte[2048];
-            socketInputStream.read(fileHashByte);
+            socketInputStream.read(fileHashByte);            
             String fileHashString = new String(fileHashByte);
             String[] parts = fileHashString.split(":");
             if(parts[0].equals("FileHashDetails"))
             {
-            	FileHashDetails fileHashDetails = new FileHashDetails(parts[1],parts[2],parts[3],parts[4]);
-            	System.out.println("PUT - FileHashDetails: " + fileHashDetails.toString());
-            	gateway.UpdateFileHashCode(Helper.getRelativePath(fileName), fileHashDetails);
+            	FileHashDetails fileHashDetails = new FileHashDetails(parts[1],parts[2],parts[3],parts[4]);                
+            	gateway.UpdateFileHashCode(fileName, fileHashDetails);
             	
-                System.out.println("FileHash(" + Helper.getRelativePath(fileName) + ", " + parts[1] + ") has been registred successfully.");
+                System.out.println(fileHashDetails.toString() + " - has been registred in database successfully.");
             	WriteToClient("ACKNOWLEDGE:");
             }
             else
             {
-            	WriteToClient("Error:FileHash wasn't sent.:");
+            	WriteToClient("Error:FileHash wasn't sent succesfully.:");
             }
 
-            out.close();
             return true;
         } catch (IOException ex) {
             System.out.println("CommandPUT: " + ex);
-        }
+		} finally {
+			try {
+				if (fileOutputStream != null)
+					fileOutputStream.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
 
         return false;
     }
@@ -151,8 +166,8 @@ public class ReceivedCommand {
 	public boolean CommandRENAME(String oldFileName, String newFileName)
     {
     	try {
-	        String oldFilePath = RootPath + "/" +  oldFileName;
-	        String newFilePath = RootPath + "/" + newFileName;
+	        String oldFilePath = RootPath + oldFileName;
+	        String newFilePath = RootPath + newFileName;
 	        
 	        File oldFile = new File(oldFilePath);
 	        File newFile = new File(newFilePath);
@@ -163,7 +178,7 @@ public class ReceivedCommand {
 
 	            if(oldFile.renameTo(newFile))
 	            {
-                  Thread.sleep(10);
+// !!! Thread.sleep(10);
 
                   if(newFile.isDirectory())
                   {
@@ -183,7 +198,8 @@ public class ReceivedCommand {
 	            WriteToClient("Error:failed to rename the file " + oldFileName + " to " + newFileName + ".:");
 	            return false;
 	        }
-	        else if(newFile.exists())
+// !!! Nu e chiar corect. Poate ar fi corect textul pt Write-ul de mai sus. 
+	        else if(newFile.exists())		
 	        {
 	            WriteToClient("Error:Can't rename the file to the new name because a file with the new desired name already exists!:");
 	            return false;
@@ -204,32 +220,49 @@ public class ReceivedCommand {
     	String filePath = RootPath + fileName;
         File fileToDelete = new File(filePath);
 
-        try {
+        try 
+        {
             if(fileToDelete.isDirectory())
             {
                 boolean directoryDeleted = DeleteDirectory(fileToDelete);
-                if(directoryDeleted) {
-                	gateway.DeleteFileHashCode(fileName, true); 				// Cum tratam cazurile de stergere de DIR in DB ?
-                																// Ma gandesc la un WHERE RelativePath LIKE 'relPath%' !!!
+                if(directoryDeleted) 
+                {
+// Cum tratam cazurile de stergere de DIR in DB ?
+// Ma gandesc la un WHERE RelativePath LIKE 'relPath%' !!!
+// !!! Nu e chiar ok. Nu ar trebuii sa existe posibilitatea de a sterge un director.
+//      Asta ar insemna sa stergem toate fisierele+hash-urile din db si de pe hard.. 
+//		Poate cel mai ok e sa se stearga un singur hash odata => SA RETURNAM MESAJ CA SERVERUL NU POATE STERGE UN FOLDER?
+// PUTEM lasa si asa, nu cred ca e mare paguba..
+// !!! Verificat QUERY-ul pt cazul in care alegem sa nu stergem un folder !!!
+                	gateway.DeleteFileHashCode(fileName, true); 				
                 	System.out.println("Succesfully deleted directory: " + fileName + " and all the files that it contained." );
                     WriteToClient("ACKNOWLEDGE:");                    
                 }
                 else
+                {
                     WriteToClient("Error:failed to delete directory " + fileToDelete + ".:");
+                }
+                
                 return directoryDeleted;
             }
 
 
             boolean fileDeleted = fileToDelete.delete();
-            if(fileDeleted) {
+            if(fileDeleted) 
+            {
             	gateway.DeleteFileHashCode(fileName, false);
             	System.out.println("Succesfully deleted file: " + fileName + "." );
                 WriteToClient("ACKNOWLEDGE:");
             }
             else
+            {
                 WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
+            }
+            
             return fileDeleted;
-        } catch (Exception ex) {
+        } 
+        catch (Exception ex) 
+        {
             WriteToClient("Error:" + ex.getMessage() + ".:");
             return false;
         }
@@ -241,13 +274,21 @@ public class ReceivedCommand {
 
         try{
             String fullPath = RootPath + folderName;
+            System.out.println("fullPath " + fullPath);
+            
             File file = new File(fullPath);
-            directoryCreated = file.mkdir();
+            directoryCreated = file.mkdirs();
 
             if(directoryCreated)
+            {
+            	System.out.println("Directory " + fullPath + " was created successfully.");
                 WriteToClient("ACKNOWLEDGE:");
+            }
             else
+            {
+            	System.out.println("Directory " + fullPath + " creation failed.");
                 WriteToClient("Error:Failed to create directory " + folderName + ".:");
+            }
         }catch(Exception e){
            e.printStackTrace();
         }
@@ -255,6 +296,7 @@ public class ReceivedCommand {
         return directoryCreated;
     }
 
+	
 	
 	private void WriteToClient(String message)
     {
@@ -266,20 +308,35 @@ public class ReceivedCommand {
             System.out.println(ex.getMessage());
         }
     }
-
+	
+	private FileOutputStream ValidateFile(String filePath) throws IOException
+	{
+		File file = new File(filePath);
+		
+		File parentDir = file.getParentFile();
+		if(!parentDir.exists())
+			parentDir.mkdirs();
+		else if (file.exists())
+			file.delete();
+		
+		file.createNewFile();
+		
+		return new FileOutputStream(file.getAbsoluteFile(), true);
+	}
+	
 	private boolean DeleteDirectory(File path)
     {
-        if( path.exists() ) {
+        if(path.exists()) 
+        {
           File[] files = path.listFiles();
-          for(int i=0; i<files.length; i++) {
-             if(files[i].isDirectory()) {
+          for(int i=0; i<files.length; i++) 
+          {
+             if(files[i].isDirectory()) 
                DeleteDirectory(files[i]);
-             }
-             else {
+             else
                files[i].delete();
-             }
           }
         }
-        return( path.delete() );
+        return path.delete();
     }
 }

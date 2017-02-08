@@ -19,7 +19,8 @@ public class Server {
         byte[] bytesCommand;
         boolean serverActive = true;
 
-        try {
+        try 
+        {
             while(serverActive)
             {
                 System.out.println("\t.......................................");
