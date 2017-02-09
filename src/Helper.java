@@ -2,7 +2,7 @@ public class Helper
 {
 	public static String getSyncLocation()
 	{
-	    return "/home/rares/SyncRootDirectory";
+	    return "/home/rares/SyncRootDirectory/";
 	}
 	public static String getSpecificPath(String fullPath, String fixedPath)
 	{
