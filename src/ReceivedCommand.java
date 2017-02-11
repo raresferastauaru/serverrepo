@@ -4,15 +4,15 @@ public class ReceivedCommand {
 
     private static Gateway gateway = new Gateway();
     private static String RootPath = Helper.getSyncLocation();
-	
+
     private InputStream socketInputStream = null;
     private OutputStream socketOutputStream = null;
-	private int bufferSize =  8192; // 1492;
-	
+    private int bufferSize =  8192; // 1492;
+
     public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
   	{
-		this.socketInputStream = socketInputStream;
-		this.socketOutputStream = socketOutputStream;
+    		this.socketInputStream = socketInputStream;
+    		this.socketOutputStream = socketOutputStream;
   	}
 
 
