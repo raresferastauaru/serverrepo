@@ -9,9 +9,12 @@ public class TcpClientHandler implements Runnable {
     private static OutputStream socketOutputStream = null;
 
     private static ReceivedCommand receivedCommand;
-
-    public TcpClientHandler(Socket acceptedSocket) {
-        socket = acceptedSocket;
+	private static List<Socket> connectedSockets;
+	
+    public TcpClientHandler(Socket acceptedSocket, List<Socket> connectedSockets) {
+        this.socket = acceptedSocket;
+		this.connectedSockets = connectedSockets;
+		
         System.out.println("Server acceped a new client socket (" + socket.getPort() + ").");
 
         try {
@@ -51,9 +54,17 @@ public class TcpClientHandler implements Runnable {
             }
         }
 		catch(SocketException ex) {
-			//socket.close(); socketInputStream.close(); socketOutputStream.close();
-			// socket = null; socketInputStream = null; socketOutputStream = null;
 			System.out.println("Client connected on socket " + socket.getPort() + " was disconnected.");
+			
+			System.out.println("- Removing: " + socket.getPort());
+			synchronized (connectedSockets) 
+			{
+				connectedSockets.remove(socket);
+			}
+			for(int i = 0;i<connectedSockets.size(); i++) 
+			{
+				System.out.println("> Remained: " + connectedSockets.get(i).getPort());
+			}
 		}
         catch(Exception ex) {
             System.out.println("Reading command exception:" +
@@ -84,6 +95,19 @@ public class TcpClientHandler implements Runnable {
           case RENAME:
             readData = receivedCommand.CommandRENAME(parts[1], parts[2]);
             System.out.println("RENAME state: " + readData);
+			if(readData)
+			{
+				for(int i=0; i<connectedSockets.size(); i++)
+				{
+					System.out.println("Current Socket: " + socket.getPort());
+					Socket currentSocket = connectedSockets.get(i);
+					if(currentSocket.getPort() != socket.getPort())
+					{
+						System.out.println("Pushing notification to: " + currentSocket.getPort());
+						//String pushMessage = "PUSHNOTIFICATION:RENAMED:" + parts[1] + ":" + parts[2] + ":EOCR:";
+					}
+				}
+			}
             break;
           case DELETE:
             readData = receivedCommand.CommandDELETE(parts[1]);
@@ -95,6 +119,16 @@ public class TcpClientHandler implements Runnable {
             break;
           case KILL:
 			System.out.println("Client connected on socket " + socket.getPort() + " was disconnected.");
+			
+			System.out.println("- Removing: " + socket.getPort());
+			synchronized (connectedSockets) 
+			{
+				connectedSockets.remove(socket);
+			}
+			for(int i = 0;i<connectedSockets.size(); i++) 
+			{
+				System.out.println("> Remained: " + connectedSockets.get(i).getPort());
+			}
             return false;
         }
 

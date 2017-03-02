@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.Collections;
+import java.lang.Thread;
 
 public class ReceivedCommand {
 
@@ -11,17 +13,16 @@ public class ReceivedCommand {
 
     public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
   	{
-    		this.socketInputStream = socketInputStream;
-    		this.socketOutputStream = socketOutputStream;
+		this.socketInputStream = socketInputStream;
+		this.socketOutputStream = socketOutputStream;
   	}
 
 
-
-    public boolean CommandGET(String fileName)
+    public boolean CommandGET(String fileName) 
     {
         try
         {
-        	  System.out.println("Geting the file: " + fileName);
+        	System.out.println("Geting the file: " + fileName);
 
             int count;
             String filePath = RootPath + fileName;
@@ -34,15 +35,16 @@ public class ReceivedCommand {
                 WriteToClient("Error:Server can't return a directory! Probably it will never return a directory, just a specific file from a directory:");
             }
             else {
-            	  String fileDetails = gateway.GetFileHash(fileName);
-            	  WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
-
+				String fileDetails = gateway.GetFileHash(fileName);
+				WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
+				
                 InputStream fileInputStream = new FileInputStream(sourceFile);
                 byte[] buffer = new byte[bufferSize];
                 long startingTime = System.currentTimeMillis();
                 while ((count = fileInputStream.read(buffer, 0, buffer.length)) > 0) {
                      socketOutputStream.write(buffer, 0, count);
                 }
+				WriteToClient(":EOCR:");
                 long miliseconds = System.currentTimeMillis() - startingTime;
                 if(miliseconds == 0) miliseconds = 1;
 
@@ -55,7 +57,10 @@ public class ReceivedCommand {
                 return true;
             }
         } catch (IOException ex) {
-            System.out.println("CommandGET: ");
+            System.out.println("CommandGET - IOException: ");
+        	ex.printStackTrace();
+        } catch (Exception ex) {
+            System.out.println("CommandGET - Exception: ");
         	ex.printStackTrace();
         }
 
@@ -64,74 +69,82 @@ public class ReceivedCommand {
 
     public boolean CommandGETFileHashes()
     {
+		boolean validation = false;
         try
         {
             System.out.println("Geting the FileHashes.");
             String fileHashes = gateway.GetAllFileHashesForUser();
-
+	
+			// Does it really send it all ?!
             if(!fileHashes.equals(""))
             {
               	byte[] fileHashesBytes = fileHashes.getBytes();
-              	socketOutputStream.write(fileHashesBytes, 0, fileHashesBytes.length);
-
-  	            return true;
+              	socketOutputStream.write(fileHashesBytes, 0, fileHashesBytes.length);			
+				
+  	            validation = true;
             }
   			else
   			{
                 System.out.println("Error:There are no FileHashes stored on the server.");
                 WriteToClient("Error:There are no FileHashes stored on the server.:");
   			}
+				
+			WriteToClient(":EOCR:");
         } catch (Exception ex) {
             System.out.println("CommandGETFileHashes: " + ex);
         }
 
-        return false;
+        return validation;
     }
 
     public boolean CommandPUT(String fileName, Integer bytesToRead)
     {
+		boolean validation = false;
         //if(notEnoughSpaceOnDisk)
 		    //	WriteToClient("Error:NotEnoughSpaceOnDisk");
 
         String filePath = RootPath + fileName;
         FileOutputStream fileOutputStream = null;
 
-        System.out.println("Putting the file " + fileName + " has begun.");
+        System.out.println("Putting the file " + fileName + " has begun (size " + bytesToRead.toString() + ").");
 
         try
         {
         	fileOutputStream = ValidateFile(filePath);
 
-          WriteToClient("ACKNOWLEDGE:");
-
+			WriteToClient("ACKNOWLEDGE:");
+			
         	Integer numberOfBytesRead, bytesLeft = bytesToRead;
         	byte[] buffer = new byte[bufferSize];
         	boolean readingData = true;
 
-            long startingTime = System.currentTimeMillis();
-            while(readingData)
-            {
-                numberOfBytesRead = socketInputStream.read(buffer, 0, buffer.length);
-                fileOutputStream.write(buffer, 0, numberOfBytesRead);
-                bytesLeft -= numberOfBytesRead;
+			if(bytesToRead != 0)
+			{
+				long startingTime = System.currentTimeMillis();
+				while(readingData)
+				{
+					numberOfBytesRead = socketInputStream.read(buffer, 0, buffer.length);
+					fileOutputStream.write(buffer, 0, numberOfBytesRead);
+					bytesLeft -= numberOfBytesRead;
 
-                if (bytesLeft == 0)
-                {
-                    long miliseconds = System.currentTimeMillis() - startingTime;
-                    if(miliseconds == 0) miliseconds = 1;
+					if (bytesLeft == 0)
+					{
+						long miliseconds = System.currentTimeMillis() - startingTime;
+						if(miliseconds == 0) miliseconds = 1;
 
-                    System.out.println("File " + fileName +
-	                                    " was transferred with " + String.valueOf(bytesToRead / miliseconds) +
-	                                    " kbps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
+						System.out.println("File " + fileName +
+											" was transferred with " + String.valueOf(bytesToRead / miliseconds) +
+											" kbps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
 
-                    readingData = false;
-                }
-                else if(bytesLeft < 0)
-                {
-                	System.out.println("File " + fileName + " is on bytesLeft < 0. WHY ?");
-                }
-            }
-
+						readingData = false;
+					}
+					else if(bytesLeft < 0)
+					{
+						System.out.println("File " + fileName + " is on bytesLeft < 0. WHY ?");
+					}
+				}
+			}
+			
             WriteToClient("ACKNOWLEDGE:");
 
             byte[] fileHashByte = new byte[2048];
@@ -145,13 +158,14 @@ public class ReceivedCommand {
 
                 System.out.println(fileHashDetails.toString() + " - has been registred in database successfully.");
             	WriteToClient("ACKNOWLEDGE:");
+				WriteToClient("EOCR:");
             }
             else
             {
             	WriteToClient("Error:FileHash wasn't sent succesfully.:");
             }
 
-            return true;
+            validation = true;
         } catch (IOException ex) {
             System.out.println("CommandPUT: " + ex);
 		} finally {
@@ -163,18 +177,24 @@ public class ReceivedCommand {
 			}
 		}
 
-        return false;
+        return validation;
     }
 
     public boolean CommandRENAME(String oldFileName, String newFileName)
     {
     	try {
-	        String oldFilePath = RootPath + oldFileName;
-	        String newFilePath = RootPath + newFileName;
+			String oldFilePath = RootPath + oldFileName;
+			String newFilePath = RootPath + newFileName;
 
-	        File oldFile = new File(oldFilePath);
-	        File newFile = new File(newFilePath);
-
+			File oldFile = new File(oldFilePath);
+			File newFile = new File(newFilePath);
+			
+	        if(newFile.exists())
+	        {
+	            WriteToClient("Error:Can't rename the file to the new name because a file with the new desired name already exists!:");
+	            return false;
+	        }
+			
 	        if(oldFile.exists())
 	        {
 	            WriteToClient("ACKNOWLEDGE:");
@@ -193,27 +213,20 @@ public class ReceivedCommand {
 					}
 
 					WriteToClient("ACKNOWLEDGE:");
+					WriteToClient("EOCR:");
 					return true;
 	            }
 
 	            WriteToClient("Error:failed to rename the file " + oldFileName + " to " + newFileName + ".:");
 	            return false;
 	        }
-// !!! Nu e chiar corect. Poate ar fi corect textul pt Write-ul de mai sus.
-	        else if(newFile.exists())
-	        {
-	            WriteToClient("Error:Can't rename the file to the new name because a file with the new desired name already exists!:");
-	            return false;
-	        }
-	        else
-	        {
-	            WriteToClient("Error:File " + oldFileName + " doesn't exists!:");
-	            return false;
-	        }
+			
+			WriteToClient("Error:can't rename the file " + oldFileName + " to " + newFileName + " because it doesn't exist.:");
 	    } catch (Exception ex) {
             System.out.println("CommandPUT: " + ex);
-            return false;
 	    }
+		
+		return false;
     }
 
     public boolean CommandDELETE(String fileName)
@@ -228,16 +241,10 @@ public class ReceivedCommand {
                 boolean directoryDeleted = DeleteDirectory(fileToDelete);
                 if(directoryDeleted)
                 {
-// Cum tratam cazurile de stergere de DIR in DB ?
-// Ma gandesc la un WHERE RelativePath LIKE 'relPath%' !!!
-// !!! Nu e chiar ok. Nu ar trebuii sa existe posibilitatea de a sterge un director.
-//      Asta ar insemna sa stergem toate fisierele+hash-urile din db si de pe hard..
-//		Poate cel mai ok e sa se stearga un singur hash odata => SA RETURNAM MESAJ CA SERVERUL NU POATE STERGE UN FOLDER?
-// PUTEM lasa si asa, nu cred ca e mare paguba..
-// !!! Verificat QUERY-ul pt cazul in care alegem sa nu stergem un folder !!!
                 	gateway.DeleteFileHashCode(fileName, true);
                 	System.out.println("Succesfully deleted directory: " + fileName + " and all the files that it contained." );
                     WriteToClient("ACKNOWLEDGE:");
+					WriteToClient("EOCR:");
                 }
                 else
                 {
@@ -275,7 +282,6 @@ public class ReceivedCommand {
 
         try{
             String fullPath = RootPath + folderName;
-            System.out.println("fullPath " + fullPath);
 
             File file = new File(fullPath);
             directoryCreated = file.mkdirs();

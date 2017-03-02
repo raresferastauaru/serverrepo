@@ -26,7 +26,8 @@ public class Gateway {
 				fileHashesString += rs.getString("RelativePath") + ":" + 
 									rs.getString("OldRelativePath") + ":" + 
 									rs.getString("HashCode") + ":" + 
-									rs.getString("OldHashCode") + "|";
+									rs.getString("OldHashCode") + ":" +
+									rs.getString("IsDeleted") + "|";
 			}
 		} catch (SQLException e) {
 			//e.printStackTrace();
@@ -99,8 +100,8 @@ public class Gateway {
 		}
 	}
 	
-	private String deleteFileHashCodeQuery = "DELETE FROM FileHashes WHERE RelativePath = ? AND UserId = ?";
-	private String deleteDirectoryHashCodesQuery = "DELETE FROM FileHashes WHERE RelativePath LIKE ? AND UserId = ?";
+	private String deleteFileHashCodeQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath = ? AND UserId = ?";
+	private String deleteDirectoryHashCodesQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath LIKE ? AND UserId = ?";
 	public void DeleteFileHashCode(String relativePath, boolean isDirectory) {
 		SqlParam[] sqlParams = new SqlParam[2];
 		sqlParams[1] = new SqlParam("Integer", USERID);

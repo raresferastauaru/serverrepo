@@ -5,6 +5,7 @@ import java.util.*;
 public class Server {
     private static int socketNo = 4444;
     private static ServerSocket serverSocket = null;
+	private static List<Socket> connectedSockets = new ArrayList<Socket>();
 
     public static void main(String[] args) throws Exception {
         try {
@@ -15,12 +16,25 @@ public class Server {
         }
 
         while (true) {
-			try {
-					(new Thread(new TcpClientHandler(serverSocket.accept()))).start();
-			} catch (Exception e) {
-					System.out.println("Server failed.\nException: " + e.getMessage());						
-					//System.out.println(Thread.currentThread().getName() + " ");
-					//CloseServer();
+			try 
+			{
+				Socket socket = serverSocket.accept();
+				
+				synchronized (connectedSockets) 
+				{
+					connectedSockets.add(socket);
+				}
+				
+				//for(int i=0; i<connectedSockets.size(); i++)
+				//{
+			    //	System.out.println("-- ConnectedSockets: " + connectedSockets.get(i).getPort());
+				//}
+				
+				(new Thread(new TcpClientHandler(socket, connectedSockets))).start();
+			}			
+			catch (Exception e) 
+			{
+					System.out.println("Server failed.\nException: " + e.getMessage());		
 			}
 		}
     }
