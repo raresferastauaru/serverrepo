@@ -9,14 +9,17 @@ public class ReceivedCommand {
 
     private InputStream socketInputStream = null;
     private OutputStream socketOutputStream = null;
-    private int bufferSize =  8192; // 1492;
-
+    private int bufferSize =  8192;
+	
     public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
   	{
 		this.socketInputStream = socketInputStream;
 		this.socketOutputStream = socketOutputStream;
   	}
-
+	
+	public boolean ValidateConnectedUser(String userName, String userPassword) {
+		return gateway.ValidateConnectedUser(userName, userPassword);
+	}
 
     public boolean CommandGET(String fileName) 
     {
@@ -97,7 +100,7 @@ public class ReceivedCommand {
         return validation;
     }
 
-    public boolean CommandPUT(String fileName, Integer bytesToRead)
+    public boolean CommandPUT(String fileName, int fileHashCode, Integer bytesToRead)
     {
 		boolean validation = false;
         //if(notEnoughSpaceOnDisk)
@@ -111,9 +114,13 @@ public class ReceivedCommand {
         try
         {
         	fileOutputStream = ValidateFile(filePath);
-
-			WriteToClient("ACKNOWLEDGE:");
 			
+			int storedHashCode = gateway.GetFileHashCode(fileName);
+			if(storedHashCode != fileHashCode)
+				WriteToClient("ACKNOWLEDGE:");
+			else
+				WriteToClient("Error: the file is up to date already.");
+				
         	Integer numberOfBytesRead, bytesLeft = bytesToRead;
         	byte[] buffer = new byte[bufferSize];
         	boolean readingData = true;
@@ -236,38 +243,45 @@ public class ReceivedCommand {
 
         try
         {
-            if(fileToDelete.isDirectory())
-            {
-                boolean directoryDeleted = DeleteDirectory(fileToDelete);
-                if(directoryDeleted)
-                {
-                	gateway.DeleteFileHashCode(fileName, true);
-                	System.out.println("Succesfully deleted directory: " + fileName + " and all the files that it contained." );
-                    WriteToClient("ACKNOWLEDGE:");
-					WriteToClient("EOCR:");
-                }
-                else
-                {
-                    WriteToClient("Error:failed to delete directory " + fileToDelete + ".:");
-                }
+			if(fileToDelete.exists())
+			{
+				if(fileToDelete.isDirectory())
+				{
+					boolean directoryDeleted = DeleteDirectory(fileToDelete);
+					if(directoryDeleted)
+					{
+						gateway.DeleteFileHashCode(fileName, true);
+						System.out.println("Succesfully deleted directory: " + fileName + " and all the files that it contained." );
+						WriteToClient("ACKNOWLEDGE:");
+						WriteToClient("EOCR:");
+					}
+					else
+					{
+						WriteToClient("Error:failed to delete directory " + fileToDelete + ".:");
+					}
 
-                return directoryDeleted;
-            }
+					return directoryDeleted;
+				}
 
 
-            boolean fileDeleted = fileToDelete.delete();
-            if(fileDeleted)
-            {
-            	gateway.DeleteFileHashCode(fileName, false);
-            	System.out.println("Succesfully deleted file: " + fileName + "." );
-                WriteToClient("ACKNOWLEDGE:");
-            }
-            else
-            {
-                WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
-            }
-
-            return fileDeleted;
+				boolean fileDeleted = fileToDelete.delete();
+				if(fileDeleted)
+				{
+					gateway.DeleteFileHashCode(fileName, false);
+					System.out.println("Succesfully deleted file: " + fileName + "." );
+					WriteToClient("ACKNOWLEDGE:");
+				}
+				else
+				{
+					WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
+				}
+				return fileDeleted;
+			}
+			else 
+			{
+				WriteToClient("Error: file " + fileToDelete + " is already deleted on server.:");
+				return false;
+			}
         }
         catch (Exception ex)
         {

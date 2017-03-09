@@ -3,10 +3,33 @@ import java.sql.SQLException;
 
 public class Gateway {
 	private DAL _dal;
-	private String USERID = "1";
+	private String USERID = "0";
 
 	public Gateway() {
 		_dal= new DAL();
+	}
+	
+	private String selectConnectedUser = "SELECT * FROM Users WHERE UserName = ?";
+	public boolean ValidateConnectedUser(String userName, String userPassword) 
+	{		
+		SqlParam[] sqlParams = new SqlParam[1];
+		sqlParams[0] = new SqlParam("String", userName);
+		
+		ResultSet rs = _dal.RunQueryReturnRs(selectConnectedUser, sqlParams);
+		
+		try {
+			rs.next();
+			String encryptedPassword = rs.getString("UserPassword");
+			boolean userValid = Sha2Helper.verify(userPassword, encryptedPassword);
+			
+			if(userValid) {
+				USERID = rs.getString("UserId");
+				return true;
+			}
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+		}
+		return false;
 	}
 
 	// FILE HASHES //
@@ -62,6 +85,27 @@ public class Gateway {
 		}
 
 		return fileHashString;
+	}
+	
+	private String selectFileHashCodeQuery = "SELECT * FROM FileHashes WHERE UserId = ? AND RelativePath = ?";
+	// return fileHashCode
+	public int GetFileHashCode(String relativePath) {
+		SqlParam[] sqlParams = new SqlParam[2];
+		sqlParams[0] = new SqlParam("Integer", USERID);
+		sqlParams[1] = new SqlParam("String", relativePath);
+		
+		ResultSet rs = _dal.RunQueryReturnRs(selectFileHashCodeQuery, sqlParams);
+
+		try {
+			rs.next();
+			
+			return rs.getInt("HashCode");
+		} catch (SQLException e) {
+			//e.printStackTrace();
+			System.out.println("SQLException on GetFileHashCode: progressing the ResultSet");
+			System.out.println("Message: " + e.getMessage());
+		}
+		return 0;
 	}
 	
 	private String updateFileHashCodeStoredProcedure = "{CALL UpdateFileHashCode(?, ?, ?, ?, ?, ?)}";
