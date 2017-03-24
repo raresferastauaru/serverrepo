@@ -17,7 +17,8 @@ public class ReceivedCommand {
 		this.socketOutputStream = socketOutputStream;
   	}
 	
-	public boolean ValidateConnectedUser(String userName, String userPassword) {
+	public boolean ValidateConnectedUser(String userName, String userPassword)
+	{
 		return gateway.ValidateConnectedUser(userName, userPassword);
 	}
 
@@ -39,6 +40,7 @@ public class ReceivedCommand {
             }
             else {
 				String fileDetails = gateway.GetFileHash(fileName);
+				System.out.println("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
 				WriteToClient("ACKNOWLEDGE:" + sourceFile.length() + ":" + fileDetails + ":");
 				
                 InputStream fileInputStream = new FileInputStream(sourceFile);
@@ -47,7 +49,9 @@ public class ReceivedCommand {
                 while ((count = fileInputStream.read(buffer, 0, buffer.length)) > 0) {
                      socketOutputStream.write(buffer, 0, count);
                 }
-				WriteToClient(":EOCR:");
+                Thread.sleep(250);
+
+				WriteToClient("EOCR:");
                 long miliseconds = System.currentTimeMillis() - startingTime;
                 if(miliseconds == 0) miliseconds = 1;
 
@@ -62,49 +66,21 @@ public class ReceivedCommand {
         } catch (IOException ex) {
             System.out.println("CommandGET - IOException: ");
         	ex.printStackTrace();
-        } catch (Exception ex) {
+        } catch (InterruptedException ex) {
+            System.out.println("CommandPUT: InterruptedException: " + ex);
+		} catch (Exception ex) {
             System.out.println("CommandGET - Exception: ");
         	ex.printStackTrace();
         }
 
         return false;
     }
-
-    public boolean CommandGETFileHashes()
-    {
-		boolean validation = false;
-        try
-        {
-            System.out.println("Geting the FileHashes.");
-            String fileHashes = gateway.GetAllFileHashesForUser();
-	
-			// Does it really send it all ?!
-            if(!fileHashes.equals(""))
-            {
-              	byte[] fileHashesBytes = fileHashes.getBytes();
-              	socketOutputStream.write(fileHashesBytes, 0, fileHashesBytes.length);			
-				
-  	            validation = true;
-            }
-  			else
-  			{
-                System.out.println("Error:There are no FileHashes stored on the server.");
-                WriteToClient("Error:There are no FileHashes stored on the server.:");
-  			}
-				
-			WriteToClient(":EOCR:");
-        } catch (Exception ex) {
-            System.out.println("CommandGETFileHashes: " + ex);
-        }
-
-        return validation;
-    }
-
+    
     public boolean CommandPUT(String fileName, int fileHashCode, Integer bytesToRead)
     {
 		boolean validation = false;
         //if(notEnoughSpaceOnDisk)
-		    //	WriteToClient("Error:NotEnoughSpaceOnDisk");
+		    //WriteToClient("Error:NotEnoughSpaceOnDisk");
 
         String filePath = RootPath + fileName;
         FileOutputStream fileOutputStream = null;
@@ -119,7 +95,7 @@ public class ReceivedCommand {
 			if(storedHashCode != fileHashCode)
 				WriteToClient("ACKNOWLEDGE:");
 			else
-				WriteToClient("Error: the file is up to date already.");
+				WriteToClient("Error: the file " + fileName + "(HashCode - " + fileHashCode + ") is up to date already.");
 				
         	Integer numberOfBytesRead, bytesLeft = bytesToRead;
         	byte[] buffer = new byte[bufferSize];
@@ -139,9 +115,7 @@ public class ReceivedCommand {
 						long miliseconds = System.currentTimeMillis() - startingTime;
 						if(miliseconds == 0) miliseconds = 1;
 
-						System.out.println("File " + fileName +
-											" was transferred with " + String.valueOf(bytesToRead / miliseconds) +
-											" kbps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
+						System.out.println("Transfer done: " + String.valueOf(bytesToRead / miliseconds) + " kbps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
 
 						readingData = false;
 					}
@@ -150,6 +124,10 @@ public class ReceivedCommand {
 						System.out.println("File " + fileName + " is on bytesLeft < 0. WHY ?");
 					}
 				}
+			}
+			else
+			{
+				Thread.sleep(250);
 			}
 			
             WriteToClient("ACKNOWLEDGE:");
@@ -174,7 +152,9 @@ public class ReceivedCommand {
 
             validation = true;
         } catch (IOException ex) {
-            System.out.println("CommandPUT: " + ex);
+            System.out.println("CommandPUT: IOException: " + ex);
+		} catch (InterruptedException ex) {
+            System.out.println("CommandPUT: InterruptedException: " + ex);
 		} finally {
 			try {
 				if (fileOutputStream != null)
@@ -263,7 +243,6 @@ public class ReceivedCommand {
 					return directoryDeleted;
 				}
 
-
 				boolean fileDeleted = fileToDelete.delete();
 				if(fileDeleted)
 				{
@@ -317,8 +296,39 @@ public class ReceivedCommand {
         return directoryCreated;
     }
 
+    public boolean CommandGETFileHashes()
+    {
+		boolean validation = false;
+        try
+        {
+            System.out.println("Geting the FileHashes.");
+            String fileHashes = gateway.GetAllFileHashesForUser();
+	
+			// Does it really send it all ?!
+            if(!fileHashes.equals(""))
+            {
+              	byte[] fileHashesBytes = fileHashes.getBytes();
+           		socketOutputStream.write(fileHashesBytes, 0, fileHashesBytes.length);
+				
+  	            validation = true;
+            }
+  			else
+  			{
+                System.out.println("Error:There are no FileHashes stored on the server.");
+                WriteToClient("Error:There are no FileHashes stored on the server.:");
+  			}
+				
+			WriteToClient(":EOCR:");
+        } catch (Exception ex) {
+            System.out.println("CommandGETFileHashes: " + ex);
+        }
+
+        return validation;
+    }
 
 
+
+	/// HELPERS ///
 	private void WriteToClient(String message)
     {
         try {
@@ -349,14 +359,14 @@ public class ReceivedCommand {
     {
         if(path.exists())
         {
-          File[] files = path.listFiles();
-          for(int i=0; i<files.length; i++)
-          {
-             if(files[i].isDirectory())
-               DeleteDirectory(files[i]);
-             else
-               files[i].delete();
-          }
+			File[] files = path.listFiles();
+			for(int i=0; i<files.length; i++)
+			{
+				if(files[i].isDirectory())
+					DeleteDirectory(files[i]);
+				else
+					files[i].delete();
+			}
         }
         return path.delete();
     }

@@ -84,39 +84,41 @@ public class TcpClientHandler implements Runnable {
         CommandTypes cmd = CommandTypes.valueOf(parts[0]);
         switch(cmd)
         {
-          case GET:
-            readData = receivedCommand.CommandGET(parts[1]);
-            System.out.println("GET state: " + readData);
-            break;
-          case GETFileHashes:
-            readData = receivedCommand.CommandGETFileHashes();
-            System.out.println("GETFileHashes state: " + readData);
-            break;
-          case PUT:
-            readData = receivedCommand.CommandPUT(parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
-            System.out.println("PUT state: " + readData);
-			if(readData)
-				SendPushNotification("CHANGED", parts[1]);			
-            break;
-          case RENAME:
-            readData = receivedCommand.CommandRENAME(parts[1], parts[2]);
-            System.out.println("RENAME state: " + readData);
-			if(readData)
-				SendPushNotification("RENAMED", parts[1], parts[2]);
-            break;
-          case DELETE:
-            readData = receivedCommand.CommandDELETE(parts[1]);
-            System.out.println("DELETE state: " + readData);
-			if(readData)
-				SendPushNotification("DELETED", parts[1]);
-            break;
-          case MKDIR:
-            readData = receivedCommand.CommandMKDIR(parts[1]);
-            System.out.println("MKDIR state: " + readData);
-            break;
-          case KILL:
-			ManageDisconnectedSocket();
-            return false;
+			case GET:
+				readData = receivedCommand.CommandGET(parts[1]);
+				System.out.println("GET state: " + readData);
+				break;
+			case GETFileHashes:
+				readData = receivedCommand.CommandGETFileHashes();
+				System.out.println("GETFileHashes state: " + readData);
+				break;
+			case PUT:
+				readData = receivedCommand.CommandPUT(parts[1], Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+				System.out.println("PUT state: " + readData);
+				if(readData)
+					SendPushNotification("CHANGED", parts[1]);			
+				break;
+			case RENAME:
+				readData = receivedCommand.CommandRENAME(parts[1], parts[2]);
+				System.out.println("RENAME state: " + readData);
+				if(readData)
+					SendPushNotification("RENAMED", parts[1], parts[2]);
+				break;
+			case DELETE:
+				readData = receivedCommand.CommandDELETE(parts[1]);
+				System.out.println("DELETE state: " + readData);
+				if(readData)
+					SendPushNotification("DELETED", parts[1]);
+				break;
+			case MKDIR:
+				readData = receivedCommand.CommandMKDIR(parts[1]);
+				System.out.println("MKDIR state: " + readData);
+				if(readData)
+					SendPushNotification("MKDIR", parts[1]);
+				break;
+			case KILL:
+				ManageDisconnectedSocket();
+				return false;
         }
 
         return true;
@@ -148,14 +150,14 @@ public class TcpClientHandler implements Runnable {
 		SendPushNotification(command, value1 + ":" + value2);
 	}
 	
-	private void ManageConnectedSocket(String userName) {	
-		System.out.println("Server acceped user " + CurrentConnectedUser.getUserName() + " on socket port: " + CurrentConnectedUser.getSocket().getPort() + ".");
-		WriteToClient("AKNOWLEDGE:");
-		
+	private void ManageConnectedSocket(String userName) {		
 		CurrentConnectedUser.setUserName(userName);
 		synchronized (Helper.ConnectedUsers)  {
 			Helper.ConnectedUsers.add(CurrentConnectedUser);
 		}
+
+		System.out.println("Server acceped user " + CurrentConnectedUser.getUserName() + " on socket port: " + CurrentConnectedUser.getSocket().getPort() + ".");
+		WriteToClient("AKNOWLEDGE:");
 	}
 	
 	private void ManageDisconnectedSocket() {

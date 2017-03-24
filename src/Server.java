@@ -33,7 +33,7 @@ public class Server {
 
     private static void CloseServer(){
     	try {
-				serverSocket.close();
+			serverSocket.close();
     	} catch(Exception ex) {
     		System.out.println("Closing server exception: " + ex.getMessage());
     	}
