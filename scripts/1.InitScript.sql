@@ -32,5 +32,5 @@ CREATE TABLE MyCloudDB.FileHashes
         ON DELETE CASCADE
 );
 
-INSERT INTO MyCloudDB.Users VALUES(1, "rares", "PQ9pl92y+cTl0YEs9WrO18U3oFZMpUaxJScWoDnvy4Q=");			-- passw1
+INSERT INTO MyCloudDB.Users VALUES(1, "rares", "PQ9pl92y+cTl0YEs9WrO18U3oFZMpUaxJScWoDnvy4Q=");					-- passw1
 INSERT INTO MyCloudDB.Users VALUES(2, "tavi",    "MUv5mKIKHtTlAazRz1Lq6XP33UkcDJL9oqC2cTbTCFA=");				-- passw2
