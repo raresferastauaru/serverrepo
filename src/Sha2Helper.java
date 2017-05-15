@@ -48,10 +48,10 @@ public class Sha2Helper {
 	}
 
 	private static byte[] base64ToByte(String str) throws IOException {	    	
-	    return DatatypeConverter.parseBase64Binary(str);
+		return DatatypeConverter.parseBase64Binary(str);
 	}
 
 	private static String byteToBase64(byte[] bt) {		
-	    return DatatypeConverter.printBase64Binary(bt);
+		return DatatypeConverter.printBase64Binary(bt);
 	}
 }

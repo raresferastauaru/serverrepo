@@ -10,7 +10,8 @@ public class ReceivedCommand {
     private OutputStream socketOutputStream = null;
     
     private String RootPath = Helper.getSyncLocation();
-    private String UserName;
+    private String UserDetails;
+    private ConnectedUser ConnectedUser;
     private int bufferSize =  8192;
 	
     public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
@@ -36,17 +37,21 @@ public class ReceivedCommand {
 			    }        
 			}
 			
-			UserName = userName;
+			UserDetails = userName;
 			return true;
 		}
 		return false;
+	}
+	public void appendToUserDetails(String detail) 
+	{
+		UserDetails += detail;
 	}
 
     public boolean CommandGET(String fileName) 
     {
         try
         {
-        	System.out.println(UserName + " - Geting the file: " + fileName);
+        	System.out.println(UserDetails + "\t- Geting the file: " + fileName);
 
             int count;
             String filePath = RootPath + fileName;
@@ -68,14 +73,13 @@ public class ReceivedCommand {
                 while ((count = fileInputStream.read(buffer, 0, buffer.length)) > 0) {
                      socketOutputStream.write(buffer, 0, count);
                 }
-                Thread.sleep(250);
+				WriteToClient(":EOCR:");
 
-				WriteToClient("EOCR:");
                 long miliseconds = System.currentTimeMillis() - startingTime;
                 if(miliseconds == 0) miliseconds = 1;
 
                 long sentSize = sourceFile.length();
-                System.out.println(UserName + " - File " + fileName +
+                System.out.println(UserDetails + "\t- File " + fileName +
                                     " was transferred with " + String.valueOf(sentSize / miliseconds) +
                                     " kbps (" + String.valueOf(sentSize) + "/" + String.valueOf(miliseconds) + ").");
 
@@ -83,97 +87,99 @@ public class ReceivedCommand {
                 return true;
             }
         } catch (IOException ex) {
-            System.out.println(UserName + " - CommandGET - IOException: ");
+            System.out.println(UserDetails + "\t- CommandGET - IOException: ");
         	ex.printStackTrace();
-        } catch (InterruptedException ex) {
-            System.out.println(UserName + " - CommandPUT: InterruptedException: " + ex);
 		} catch (Exception ex) {
-            System.out.println(UserName + " - CommandGET - Exception: ");
+            System.out.println(UserDetails + "\t- CommandGET - Exception: ");
         	ex.printStackTrace();
         }
 
         return false;
     }
     
-    public boolean CommandPUT(String fileName, int fileHashCode, Integer bytesToRead)
-    {
+	public boolean CommandPUT(String fileName, int fileHashCode, Integer bytesToRead)
+	{
 		boolean validation = false;
-        //if(notEnoughSpaceOnDisk)
-		    //WriteToClient("Error:NotEnoughSpaceOnDisk");
+		//if(notEnoughSpaceOnDisk)
+		//	WriteToClient("Error:NotEnoughSpaceOnDisk");
 
-        String filePath = RootPath + fileName;
-        FileOutputStream fileOutputStream = null;
+		String filePath = RootPath + fileName;
+		FileOutputStream fileOutputStream = null;
 
-        System.out.println(UserName + " - Putting the file " + fileName + " has begun (size " + bytesToRead.toString() + ").");
+		System.out.println(UserDetails + "\t- Putting the file " + fileName + " has begun (size " + bytesToRead.toString() + ").");
 
-        try
-        {
-        	fileOutputStream = ValidateFile(filePath);
+		try
+		{
+			fileOutputStream = ValidateFile(filePath);
 			
 			int storedHashCode = gateway.GetFileHashCode(fileName);
-			if(storedHashCode != fileHashCode)
-				WriteToClient("ACKNOWLEDGE:");
-			else
-				WriteToClient("Error: the file " + fileName + "(HashCode - " + fileHashCode + ") is up to date already.");
-				
-        	Integer numberOfBytesRead, bytesLeft = bytesToRead;
-        	byte[] buffer = new byte[bufferSize];
-        	boolean readingData = true;
-
-			if(bytesToRead != 0)
+			if(storedHashCode == fileHashCode)
 			{
-				long startingTime = System.currentTimeMillis();
-				while(readingData)
+				WriteToClient("Error: the file " + fileName + "(HashCode - " + fileHashCode + ") is up to date already.");
+			}
+			else
+			{
+				WriteToClient("ACKNOWLEDGE:");
+				
+				Integer numberOfBytesRead, bytesLeft = bytesToRead;
+				byte[] buffer = new byte[bufferSize];
+				boolean readingData = true;
+
+				if(bytesToRead != 0)
 				{
-					numberOfBytesRead = socketInputStream.read(buffer, 0, buffer.length);
-					fileOutputStream.write(buffer, 0, numberOfBytesRead);
-					bytesLeft -= numberOfBytesRead;
-
-					if (bytesLeft == 0)
+					long startingTime = System.currentTimeMillis();
+					while(readingData)
 					{
-						long miliseconds = System.currentTimeMillis() - startingTime;
-						if(miliseconds == 0) miliseconds = 1;
+						numberOfBytesRead = socketInputStream.read(buffer, 0, buffer.length);
+						fileOutputStream.write(buffer, 0, numberOfBytesRead);
+						bytesLeft -= numberOfBytesRead;
 
-						System.out.println(UserName + " - Transfer done: " + String.valueOf(bytesToRead / miliseconds) + " kbps (" + String.valueOf(bytesToRead) + "/" + String.valueOf(miliseconds) + ").");
+						if (bytesLeft == 0)
+						{
+							long miliseconds = System.currentTimeMillis() - startingTime;
+							if(miliseconds == 0) miliseconds = 1;
 
-						readingData = false;
-					}
-					else if(bytesLeft < 0)
-					{
-						System.out.println(UserName + " - File " + fileName + " is on bytesLeft < 0. WHY ?");
+							System.out.println(UserDetails + "\t- Transfer of file " + fileName + " is done (" + String.valueOf(bytesToRead / miliseconds) + " kbps).");
+
+							readingData = false;
+						}
+						else if(bytesLeft < 0)
+						{
+							System.out.println(UserDetails + "\t- File " + fileName + " is on bytesLeft < 0. WHY ?");
+						}
 					}
 				}
-			}
-			else
-			{
-				Thread.sleep(250);
-			}
+				else
+				{
+					Thread.sleep(250);
+				}
 			
-            WriteToClient("ACKNOWLEDGE:");
+				WriteToClient("ACKNOWLEDGE:");
 
-            byte[] fileHashByte = new byte[2048];
-            socketInputStream.read(fileHashByte);
-            String fileHashString = new String(fileHashByte);
-            String[] parts = fileHashString.split(":");
-            if(parts[0].equals("FileHashDetails"))
-            {
-            	FileHashDetails fileHashDetails = new FileHashDetails(parts[1],parts[2],parts[3],parts[4]);
-            	gateway.UpdateFileHashCode(fileName, fileHashDetails);
+				byte[] fileHashByte = new byte[2048];
+				socketInputStream.read(fileHashByte);
+				String fileHashString = new String(fileHashByte);
+				String[] parts = fileHashString.split(":");
+				if(parts[0].equals("FileHashDetails"))
+				{
+					FileHashDetails fileHashDetails = new FileHashDetails(fileName, parts[1],parts[2],parts[3],parts[4]);
+					gateway.UpdateFileHashCode(fileHashDetails);
 
-                System.out.println(UserName + " - " + fileHashDetails.toString() + " - has been registred in database successfully.");
-            	WriteToClient("ACKNOWLEDGE:");
-				WriteToClient("EOCR:");
-            }
-            else
-            {
-            	WriteToClient("Error:FileHash wasn't sent succesfully.:");
-            }
+					System.out.println(UserDetails + "\t- " + fileHashDetails.toString() + " - has been registred in database successfully.");
+					WriteToClient("ACKNOWLEDGE:");
+					WriteToClient("EOCR:");
+				}
+				else
+				{
+					WriteToClient("Error:FileHash wasn't sent succesfully.:");
+				}
 
-            validation = true;
-        } catch (IOException ex) {
-            System.out.println(UserName + " - CommandPUT: IOException: " + ex);
+				validation = true;
+			}
+		} catch (IOException ex) {
+			System.out.println(UserDetails + "\t- CommandPUT: IOException: " + ex);
 		} catch (InterruptedException ex) {
-            System.out.println(UserName + " - CommandPUT: InterruptedException: " + ex);
+			System.out.println(UserDetails + "\t- CommandPUT: InterruptedException: " + ex);
 		} finally {
 			try {
 				if (fileOutputStream != null)
@@ -183,8 +189,8 @@ public class ReceivedCommand {
 			}
 		}
 
-        return validation;
-    }
+		return validation;
+	}
 
     public boolean CommandRENAME(String oldFileName, String newFileName)
     {
@@ -207,12 +213,12 @@ public class ReceivedCommand {
 					if(newFile.isDirectory())
 					{
 					  gateway.UpdateFileHashRelativePath(oldFileName, newFileName, true);
-					  System.out.println(UserName + " - Folder " + oldFileName + " was successfully renamed to " + newFileName);
+					  System.out.println(UserDetails + "\t- Folder " + oldFileName + " was successfully renamed to " + newFileName);
 					}
 					else
 					{
 					  gateway.UpdateFileHashRelativePath(oldFileName, newFileName, false);
-					  System.out.println(UserName + " - File " + oldFileName + " was successfully renamed to " + newFileName);
+					  System.out.println(UserDetails + "\t- File " + oldFileName + " was successfully renamed to " + newFileName);
 					}
 
 					WriteToClient("ACKNOWLEDGE:");
@@ -226,7 +232,7 @@ public class ReceivedCommand {
 			
 			WriteToClient("Error:can't rename the file " + oldFileName + " to " + newFileName + " because it doesn't exist.:");
 	    } catch (Exception ex) {
-            System.out.println(UserName + " - CommandPUT: " + ex);
+            System.out.println(UserDetails + "\t- CommandPUT: " + ex);
 	    }
 		
 		return false;
@@ -246,9 +252,9 @@ public class ReceivedCommand {
 					if(directoryDeleted)
 					{
 						gateway.DeleteFileHashCode(fileName, true);
-						System.out.println(UserName + " - Succesfully deleted directory: " + fileName + " and all the files that it contained." );
+						System.out.println(UserDetails + "\t- Succesfully deleted directory: " + fileName + " and all the files that it contained." );
 						WriteToClient("ACKNOWLEDGE:");
-						WriteToClient("EOCR:");
+						//WriteToClient("EOCR:");
 					}
 					else
 					{
@@ -257,19 +263,21 @@ public class ReceivedCommand {
 
 					return directoryDeleted;
 				}
-
-				boolean fileDeleted = fileToDelete.delete();
-				if(fileDeleted)
-				{
-					gateway.DeleteFileHashCode(fileName, false);
-					System.out.println(UserName + " - Succesfully deleted file: " + fileName + "." );
-					WriteToClient("ACKNOWLEDGE:");
-				}
 				else
 				{
-					WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
+					boolean fileDeleted = fileToDelete.delete();
+					if(fileDeleted)
+					{
+						gateway.DeleteFileHashCode(fileName, false);
+						System.out.println(UserDetails + "\t- Succesfully deleted file: " + fileName + "." );
+						WriteToClient("ACKNOWLEDGE:");
+					}
+					else
+					{
+						WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
+					}
+					return fileDeleted;
 				}
-				return fileDeleted;
 			}
 			else 
 			{
@@ -296,7 +304,7 @@ public class ReceivedCommand {
 
             if(directoryCreated)
             {
-            	System.out.println(UserName + " - Directory " + fullPath + " was created successfully.");
+            	System.out.println(UserDetails + "\t- Directory " + fullPath + " was created successfully.");
                 WriteToClient("ACKNOWLEDGE:");
             }
             else
@@ -315,7 +323,7 @@ public class ReceivedCommand {
 		boolean validation = false;
         try
         {
-            System.out.println(UserName + " - Geting all the FileHashes.");
+            System.out.println(UserDetails + "\t- Geting all the FileHashes.");
             String fileHashes = gateway.GetAllFileHashesForUser();
 	
 			// Does it really send it all ?!
@@ -333,7 +341,7 @@ public class ReceivedCommand {
 				
 			WriteToClient(":EOCR:");
         } catch (Exception ex) {
-            System.out.println(UserName + " - CommandGETFileHashes: " + ex);
+            System.out.println(UserDetails + "\t- CommandGETFileHashes: " + ex);
         }
 
         return validation;
@@ -346,7 +354,7 @@ public class ReceivedCommand {
     {
         try {
         	if(!message.contains("ACKNOWLEDGE") && !message.contains("EOCR"))
-        		System.out.println(UserName + " - " + message);
+        		System.out.println(UserDetails + "\t- " + message);
 
             byte[] messageBytes = message.getBytes();
             socketOutputStream.write(messageBytes, 0, messageBytes.length);

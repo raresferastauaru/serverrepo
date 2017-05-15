@@ -9,16 +9,15 @@ public class Server {
     public static void main(String[] args) throws Exception {
         try {
             serverSocket = new ServerSocket(socketNo);
-            System.out.println("Server socket " + socketNo + " is open, now, at " + (new Date()).toString());
+            System.out.println("Server socket " + socketNo + " is open. (" + (new Date()).toString() + ")");
         } catch (IOException ex) {
-            System.out.println("Can't setup server on this port number (" + socketNo + ").");
+            System.out.println("Can't setup server on port " + socketNo + ".");
         }
 
         while (true) {
 			try {
 				Socket socket = serverSocket.accept();
-				
-				TcpClientHandler clientHandler = new TcpClientHandler(socket);				
+				TcpClientHandler clientHandler = new TcpClientHandler(socket);
 				if(clientHandler.Accepted())
 					(new Thread(clientHandler)).start();
 				else
@@ -26,7 +25,7 @@ public class Server {
 			}			
 			catch (Exception e) 
 			{
-				System.out.println("Server failed.\nException: " + e.getMessage());		
+				System.out.println("Server failed.\nException: " + e.getMessage());
 			}
 		}
     }

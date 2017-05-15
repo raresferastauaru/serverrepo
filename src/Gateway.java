@@ -87,12 +87,12 @@ public class Gateway {
 	
 	// UPDATE FILE HASHCODE
 	private String updateFileHashCodeStoredProcedure = "{CALL UpdateFileHashCode(?, ?, ?, ?, ?, ?)}";
-	public void UpdateFileHashCode(String relativePath, FileHashDetails fileHashDetails)
+	public void UpdateFileHashCode(FileHashDetails fileHashDetails)
 	{
 		SqlParam[] sqlParams = new SqlParam[6];
  
 		sqlParams[0] = new SqlParam("Integer", USERID);
-		sqlParams[1] = new SqlParam("String", relativePath);
+		sqlParams[1] = new SqlParam("String", fileHashDetails.getFileName());
 		sqlParams[2] = new SqlParam("Integer", fileHashDetails.getHashCode());
 		sqlParams[3] = new SqlParam("String", fileHashDetails.getCreationTime());
 		sqlParams[4] = new SqlParam("String", fileHashDetails.getLastWriteTime());
