@@ -33,6 +33,12 @@ public class OdroidNode
         return infosBytes;
     }
 
+    public String getOdroidNodeFullInfos()
+    {
+        String infos = _name + ", " + _port + ", " + _port;
+        return infos;
+    }
+
     @Override public boolean equals(Object obj) 
     { 
         if (obj == this)  

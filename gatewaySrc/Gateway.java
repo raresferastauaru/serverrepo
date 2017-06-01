@@ -13,7 +13,6 @@ public class Gateway {
 
     private static DAL _dal;
     private static List<OdroidNode> _availableOdroidNodes;
-    private static List<AssociatedEntities> _associatedEntitiesList;
     private static OdroidNode _userAlreadyConnectedOn;
     private static OdroidNode _lowestLoadedOdroid;
 
@@ -38,16 +37,12 @@ public class Gateway {
 
                 buffer = new byte[128];
                 int readBytes = socketInputStream.read(buffer);
-
-
                 String userName = new String(buffer).substring(0, readBytes);
 
                 OdroidNode selectedNode = GetAvailableOdroidNode(userName);
                 socketOutputStream.write(selectedNode.getOdroidNodeInfos(), 0, selectedNode.getOdroidNodeInfos().length);
-
-                AssociatedEntities assocEnt = new AssociatedEntities(selectedNode, userName);
                 
-        		System.out.println("User <" + assocEnt.getUserName() + "> was associated to node <" + assocEnt.getOdroidNode().getName() + ">.");
+        		System.out.println("User <" + userName + "> was associated to node <" +  selectedNode.getName() + ">.");
 			}			
 			catch (Exception ex) 
 			{
@@ -66,32 +61,12 @@ public class Gateway {
     }
 
     private static OdroidNode GetAvailableOdroidNode(String userName) {
-    	RefreshAssociatedEntities();
         RefreshAssociatedEntitiesInfos(userName);
         
         if(_userAlreadyConnectedOn != null)
 			return _userAlreadyConnectedOn;
         else 
 	        return _lowestLoadedOdroid;
-    }
-
-    private static void RefreshAssociatedEntities()
-    {
-    	String query = "SELECT * FROM MyCloudDB.AssociatedEntities";
-    	ResultSet rs = _dal.RunQueryReturnRs(query);
-
-        _associatedEntitiesList = new ArrayList<AssociatedEntities>();
-        try {
-            while (rs.next())
-            {
-                OdroidNode node = new OdroidNode(rs.getString("OdroidName"), rs.getString("OdroidIP"), rs.getString("OdroidPort"));
-                AssociatedEntities associatedEntities = new AssociatedEntities(node, rs.getString("UserName"));
-                _associatedEntitiesList.add(associatedEntities);
-            }
-        } catch (SQLException e) {
-            System.out.println("SQLException on RefreshAssociatedEntities: progressing the ResultSet");
-            e.printStackTrace();
-        }
     }
 
     private static void RefreshAssociatedEntitiesInfos(String userName)
@@ -112,8 +87,14 @@ public class Gateway {
 			}
 
 			rs = _dal.RunQueryReturnRs(lowestLoadedOdroidQuery);
-			rs.next();
-            _lowestLoadedOdroid = new OdroidNode(rs.getString("OdroidName"), rs.getString("OdroidIP"), rs.getString("OdroidPort"));
+			if(rs.first())
+            {
+            	_lowestLoadedOdroid = new OdroidNode(rs.getString("OdroidName"), rs.getString("OdroidIP"), rs.getString("OdroidPort"));
+			}
+			else 
+			{
+				_lowestLoadedOdroid = _availableOdroidNodes.get(0);
+			}
         } catch (SQLException e) {
             System.out.println("SQLException on RefreshAssociatedEntitiesInfos: progressing the ResultSet");
             e.printStackTrace();

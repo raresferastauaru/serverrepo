@@ -1,0 +1,30 @@
+User creation :
+create user 'replusr'@'%' identified by 'replusr';
+grant replication slave on *.* to 'replusr'@'%';
+
+
+Master status for log files:
+SHOW MASTER STATUS
+
+Slave operations:
+STOP SLAVE
+RESET SLAVE
+
+CHANGE MASTER TO 
+	MASTER_HOST='server1', 
+	MASTER_USER='replusr',
+	MASTER_PASSWORD='replusr', 
+	MASTER_LOG_FILE='mysql-bin.000067', 
+	MASTER_LOG_POS=343;
+ 
+ ~~~~~~~~~~~~~~
+
+CHANGE MASTER TO 
+	MASTER_HOST='server2', 
+	MASTER_USER='replusr',
+	MASTER_PASSWORD='replusr', 
+	MASTER_LOG_FILE='mysql-bin.000058', 
+	MASTER_LOG_POS=343;
+
+START SLAVE
+SHOW SLAVE STATUS\G
