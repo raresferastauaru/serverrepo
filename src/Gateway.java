@@ -10,7 +10,6 @@ public class Gateway {
 	}
 	
 	
-
 	// FILE HASHES //
 	
 	// GET ALL FILE HASHES
@@ -20,9 +19,9 @@ public class Gateway {
 		SqlParam[] sqlParams = new SqlParam[1];
 		sqlParams[0] = new SqlParam("Integer", USERID);
 		
-  		ResultSet rs = _dal.RunQueryReturnRs(selectFileHashesQuery, sqlParams);
+		ResultSet rs = _dal.RunQueryReturnRs(selectFileHashesQuery, sqlParams);
 
-        String fileHashesString = "";
+		String fileHashesString = "";
 		try {
 			while (rs.next())
 			{
@@ -188,5 +187,33 @@ public class Gateway {
 		sqlParams[0] = new SqlParam("String", userName);
 		
 		_dal.RunQueryReturnRs(getUsersPasswordQuery, sqlParams);
+	}
+
+
+
+	// ASSOCIATED ENTITIES //
+
+	// Subscribe to list of Associadet Entities
+    private String addNewAssociatedEntitiesQuery = "INSERT INTO MyCloudDB.AssociatedEntities(OdroidName, OdroidIP, OdroidPort, UserName) VALUES(?, ?, ?, ?)";
+    public void AddNewAssociatedEntities(String odroidName, String odroidIP, String odroidPort, String userName)
+    {
+        SqlParam[] sqlParams = new SqlParam[4];
+        sqlParams[0] = new SqlParam("String", odroidName);
+        sqlParams[1] = new SqlParam("String", odroidIP);
+        sqlParams[2] = new SqlParam("String", odroidPort);
+        sqlParams[3] = new SqlParam("String", userName);
+        
+        _dal.RunQueryReturnRs(addNewAssociatedEntitiesQuery, sqlParams);
+    }
+
+	// Subscribe from the list of Associadet Entities
+	private String deleteAssociatedEntitiesQuery = "DELETE FROM AssociatedEntities WHERE OdroidIP = ? AND UserName = ? LIMIT 1";
+	public void DeleteAssociatedEntities(String ipAddress, String userName)
+	{
+		SqlParam[] sqlParams = new SqlParam[2];
+		sqlParams[0] = new SqlParam("String", ipAddress);
+		sqlParams[1] = new SqlParam("String", userName);
+		
+		_dal.RunQueryReturnRs(deleteAssociatedEntitiesQuery, sqlParams);
 	}
 }

@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.Collections;
 import java.lang.Thread;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class ReceivedCommand {
 
@@ -11,7 +13,6 @@ public class ReceivedCommand {
     
     private String RootPath = Helper.getSyncLocation();
     private String UserDetails;
-    private ConnectedUser ConnectedUser;
     private int bufferSize =  8192;
 	
     public ReceivedCommand(InputStream socketInputStream, OutputStream socketOutputStream)
@@ -200,7 +201,7 @@ public class ReceivedCommand {
 			
 	        if(newFile.exists())
 	        {
-	            WriteToClient("Error:Can't rename the file to the new name because a file with the new desired name already exists!:");
+	            WriteToClient("Error:Can't rename the file <" + oldFileName + "> to <" + newFileName + "> because a file with the new desired name already exists!:");
 	            return false;
 	        }
 			
@@ -229,8 +230,10 @@ public class ReceivedCommand {
 	            WriteToClient("Error:failed to rename the file " + oldFileName + " to " + newFileName + ".:");
 	            return false;
 	        }
-			
-			WriteToClient("Error:can't rename the file " + oldFileName + " to " + newFileName + " because it doesn't exist.:");
+			else
+			{
+				WriteToClient("Error:can't rename the file <" + oldFileName + "> to <" + newFileName + "> because it doesn't exist.:");
+			}
 	    } catch (Exception ex) {
             System.out.println(UserDetails + "\t- CommandPUT: " + ex);
 	    }
@@ -347,7 +350,37 @@ public class ReceivedCommand {
         return validation;
     }
 
+    public void AppendUsedToAssociatedEntities(String userName)
+    {
+		String hostName;
+		String ipAddress;
+		String port = "4444";
 
+		try	{
+			hostName = 	InetAddress.getLocalHost().getHostName();		
+			ipAddress = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException ex) {
+			System.out.println("On AppendUsedToAssociatedEntities:");
+			ex.printStackTrace();
+			return;
+		}
+
+    	gateway.AddNewAssociatedEntities(hostName, ipAddress, port, userName);
+    }
+
+    public void RemoveUserFromAssociatedEntities(String userName)
+    {
+		String ipAddress;
+		try	{
+			ipAddress = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException ex) {
+			System.out.println("On RemoveUserFromAssociatedEntities:");
+			ex.printStackTrace();
+			return;
+		}
+
+    	gateway.DeleteAssociatedEntities(ipAddress, userName);
+    }
 
 	/// HELPERS ///
 	private void WriteToClient(String message)

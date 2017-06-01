@@ -21,7 +21,7 @@ public class TcpClientHandler implements Runnable {
 		try {
 			socketOutputStream = new DataOutputStream(CurrentConnectedUser.getSocket().getOutputStream());
 		} catch (IOException ex) {
-			System.out.println("Can't get socket outpus stream. ");
+			System.out.println("Can't get socket output stream. ");
 		}
 
 		receivedCommand = new ReceivedCommand(socketInputStream, socketOutputStream);
@@ -66,7 +66,7 @@ public class TcpClientHandler implements Runnable {
 		catch(SocketException ex) {
 			ManageDisconnectedSocket();
 		} catch(Exception ex) {
-		System.out.println("nTcpClientHandler: Reading command exception:" +
+		System.out.println("TcpClientHandler: Reading command exception:" +
 			"\n\tMessage: " + ex.getMessage() +
 			"\n\tToString: " + ex.toString() +
 			"\n\tStackTrace: " + ex.getStackTrace() +
@@ -149,17 +149,22 @@ public class TcpClientHandler implements Runnable {
 			Helper.ConnectedUsers.add(CurrentConnectedUser);
 		}
 
+		receivedCommand.AppendUsedToAssociatedEntities(CurrentConnectedUser.getUserName());
+
 		System.out.println("Server acceped client " + CurrentConnectedUser.getUserName() + "@" + CurrentConnectedUser.getSocket().getPort() + ". (IO streams were set)");
 		WriteToClient("AKNOWLEDGE:");
 	}
 	
-	private void ManageDisconnectedSocket() {
+	private void ManageDisconnectedSocket() {		
 		System.out.println("Client " + CurrentConnectedUser.getUserName() + "@" + CurrentConnectedUser.getSocket().getPort() + " was disconnected.");
-
+		
 		System.out.println("\t- Removing: " + CurrentConnectedUser.getSocket().getPort());
 		synchronized (Helper.ConnectedUsers) {
 			Helper.ConnectedUsers.remove(CurrentConnectedUser);
 		}
+
+		receivedCommand.RemoveUserFromAssociatedEntities(CurrentConnectedUser.getUserName());
+
 		for(int i = 0;i<Helper.ConnectedUsers.size(); i++) {
 			System.out.println("\t> Remained: " + Helper.ConnectedUsers.get(i).getSocketPort());
 		}
