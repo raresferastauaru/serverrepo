@@ -202,8 +202,6 @@ public class Gateway {
         sqlParams[1] = new SqlParam("String", odroidIP);
         sqlParams[2] = new SqlParam("String", odroidPort);
         sqlParams[3] = new SqlParam("String", userName);
-        
-        System.out.println("INSERT ASSOC: " + odroidName + ", " + odroidIP + ", " + odroidPort + ", " + userName + ".");
 
         _dal.RunQueryReturnRs(addNewAssociatedEntitiesQuery, sqlParams);
     }

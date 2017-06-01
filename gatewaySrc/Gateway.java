@@ -10,9 +10,7 @@ public class Gateway {
     private static InputStream socketInputStream = null;
     private static OutputStream socketOutputStream = null;
 
-
     private static DAL _dal;
-    private static List<OdroidNode> _availableOdroidNodes;
     private static OdroidNode _userAlreadyConnectedOn;
     private static OdroidNode _lowestLoadedOdroid;
 
@@ -24,7 +22,6 @@ public class Gateway {
             System.out.println("Can't setup server on port " + socketNo + ".");
         }
 
-        InitOdroidNodes();
         _dal = new DAL();
 
         byte[] buffer;
@@ -49,15 +46,6 @@ public class Gateway {
                 ex.printStackTrace();
 			}
 		}
-    }
-
-    private static void InitOdroidNodes() {
-        OdroidNode node1 = new OdroidNode("Odroid1", "192.168.100.31", "4444");
-        OdroidNode node2 = new OdroidNode("Odroid2", "192.168.100.32", "4444");
-
-        _availableOdroidNodes = new ArrayList<OdroidNode>();
-        _availableOdroidNodes.add(node1);
-        _availableOdroidNodes.add(node2);
     }
 
     private static OdroidNode GetAvailableOdroidNode(String userName) {
@@ -93,7 +81,7 @@ public class Gateway {
 			}
 			else 
 			{
-				_lowestLoadedOdroid = _availableOdroidNodes.get(0);
+				_lowestLoadedOdroid = new OdroidNode("Odroid1", "192.168.100.31", "4444");
 			}
         } catch (SQLException e) {
             System.out.println("SQLException on RefreshAssociatedEntitiesInfos: progressing the ResultSet");
