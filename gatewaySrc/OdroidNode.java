@@ -32,25 +32,4 @@ public class OdroidNode
         byte[] infosBytes = infos.getBytes();
         return infosBytes;
     }
-
-    public String getOdroidNodeFullInfos()
-    {
-        String infos = _name + ", " + _port + ", " + _port;
-        return infos;
-    }
-
-    @Override public boolean equals(Object obj) 
-    { 
-        if (obj == this)  
-            return true; 
-
-        if (obj == null || obj.getClass() != this.getClass())
-            return false; 
-        
-        OdroidNode odroidNode = (OdroidNode) obj; 
-
-        return _name.equals(odroidNode.getName()) 
-                && _ip.equals(odroidNode.getIP())
-                && _port.equals(odroidNode.getPort());
-    }
 }

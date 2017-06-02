@@ -59,8 +59,8 @@ public class Gateway {
 
     private static void RefreshAssociatedEntitiesInfos(String userName)
     {
-        String userAlreadyConnectedQuery = "SELECT OdroidName, OdroidIP, OdroidPort FROM AssociatedEntities WHERE UserName='" + userName +  "' LIMIT 1";
-        String lowestLoadedOdroidQuery = "SELECT OdroidName, OdroidIP, OdroidPort, Count(*) FROM AssociatedEntities GROUP BY OdroidName ORDER BY Count(*) ASC LIMIT 1";
+    	String userAlreadyConnectedQuery = "SELECT OdroidName, OdroidIP, OdroidPort FROM AssociatedEntities WHERE UserName='" + userName +  "' LIMIT 1";
+    	String lowestLoadedOdroidQuery = "SELECT OdroidName, OdroidIP, OdroidPort, Count(*) FROM AssociatedEntities GROUP BY OdroidName ORDER BY Count(*) ASC LIMIT 1";
         ResultSet rs;
 
         try {
