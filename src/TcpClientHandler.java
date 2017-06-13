@@ -123,9 +123,9 @@ public class TcpClientHandler implements Runnable {
 				if(CurrentConnectedUser.getSocketPort() != connectedUserTo.getSocketPort()	
 					&& CurrentConnectedUser.getUserName().equals(connectedUserTo.getUserName()))
 				{
-					System.out.println("PushNotification (" + command + 
-						" fisierul: " + value +
-						") a fost transmit catre clientul " + connectedUserTo.getUserName() + 
+					System.out.println("PushNotification(" + command + 
+						") fisierul <" + value +
+						"> a fost transmit catre clientul " + connectedUserTo.getUserName() + 
 						"@" + connectedUserTo.getSocketPort() + ".");
 					WriteToClientOnSocket(connectedUserTo.getSocket(), pushCommand);
 				}

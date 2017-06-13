@@ -53,7 +53,7 @@ public class ReceivedCommand {
     {
         try
         {
-        	System.out.println(UserDetails + "\t- obtine fisierul: " + fileName);
+        	System.out.println(UserDetails + "\t- Obtine fisierul: " + fileName);
 
             int count;
             String filePath = RootPath + fileName;
@@ -202,7 +202,7 @@ public class ReceivedCommand {
 			
 	        if(newFile.exists())
 	        {
-	            WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redefinit la <" + newFileName + "> pentru ca numele dorit deja exista!:");
+	            WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca numele dorit deja exista!:");
 	            return false;
 	        }
 			
@@ -233,7 +233,7 @@ public class ReceivedCommand {
 	        }
 			else
 			{
-				WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redefinit la <" + newFileName + "> pentru ca nu exista.:");
+				WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca nu exista.:");
 			}
 	    } catch (Exception ex) {
             System.out.println(UserDetails + "\t- ComandaREDENUMESTE - Exception: ");
@@ -344,7 +344,7 @@ public class ReceivedCommand {
             }
   			else
   			{
-                WriteToClient("Error:There are no FileHashes stored on the server.:");
+                WriteToClient("Error:Nu exista fisiere inregistrate deocamdata.:");
   			}
 				
 			WriteToClient(":EOCR:");
@@ -392,6 +392,9 @@ public class ReceivedCommand {
 	private void WriteToClient(String message)
     {
         try {
+        	if(message.contains("Error:"))
+        		message.replace("Error:", "");
+        	
         	if(!message.contains("ACKNOWLEDGE") && !message.contains("EOCR"))
         		System.out.println(UserDetails + "\t- " + message);
 
