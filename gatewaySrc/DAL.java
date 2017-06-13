@@ -15,13 +15,13 @@ public class DAL {
 			String DB_Url = "jdbc:mysql://localhost/MyCloudDB";
 			String DB_User = "root";
 			String DB_Password = "";
-
+			
 			Class.forName(DB_Driver);
 			connection = DriverManager.getConnection(DB_Url, DB_User, DB_Password);
 	    }
 	    catch (Exception e)
 	    {
-			System.err.println("DAL setup exception: " + e.getMessage());
+			System.out.println("Exceptie la instantierea DAL: " + e.getMessage());
 	    }
 	}
 
@@ -32,7 +32,7 @@ public class DAL {
 			preparedStatement = connection.prepareStatement(query);
 	        rs = preparedStatement.executeQuery();
 		} catch (Exception e) {
-			System.out.println("Exception on RunQueryReturnRs: " + query);
+			System.out.println("Exceptie la RuleazaCerereReturneazaRs: " + query);
 			e.printStackTrace();
 		}
 

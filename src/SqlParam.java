@@ -1,17 +1,17 @@
 public class SqlParam {
-	private String type;
-	private String value;
+	private String _type;
+	private String _value;
 	
 	public SqlParam(String type, String value) {
-		this.type = type;
-		this.value = value;
+		this._type = type;
+		this._value = value;
 	}
 
 	public String getType() {
-		return this.type;
+		return this._type;
 	}
 
 	public String getValue() {
-		return this.value;
+		return this._value;
 	}
 }

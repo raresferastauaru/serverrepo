@@ -15,10 +15,10 @@ public class Sha2Helper {
 			salt = base64ToByte("MySaltChars");
 			digest = MessageDigest.getInstance("SHA-256");
 		} catch (IOException ex) {
-			System.out.println("Sha2Helper IOException");
+			System.out.println("AjutorSha2: IOException");
 			ex.printStackTrace();
 		} catch (NoSuchAlgorithmException ex) {
-			System.out.println("Sha2Helper NoSuchAlgorithmException");
+			System.out.println("AjutorSha2: NoSuchAlgorithmException");
 			ex.printStackTrace();
 		}
 	}	

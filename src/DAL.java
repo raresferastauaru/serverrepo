@@ -5,9 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class DAL {
-	Connection connection;
-	PreparedStatement preparedStatement;
-	CallableStatement callableStatement;
+	private Connection _connection;
+	private PreparedStatement _preparedStatement;
+	private CallableStatement _callableStatement;
 
 	public DAL()
 	{
@@ -19,11 +19,11 @@ public class DAL {
 			String DB_Password = "";
 
 			Class.forName(DB_Driver);
-			connection = DriverManager.getConnection(DB_Url, DB_User, DB_Password);
+			_connection = DriverManager.getConnection(DB_Url, DB_User, DB_Password);
 	    }
 	    catch (Exception e)
 	    {
-			System.err.println("DAL setup exception: " + e.getMessage());
+			System.err.println("DAL: Exceptie la instantiere: " + e.getMessage());
 	    }
 	}
 	
@@ -31,12 +31,12 @@ public class DAL {
 	{
 		try
 		{
-			connection.close();
-			return "Dal succesfully closed";
+			_connection.close();
+			return "DAL inchis cu succes";
 		}
 		catch(Exception e)
 		{
-			return "DAL exception: " + e.getMessage();
+			return "DAL: Exceptie la Inchidere: " + e.getMessage();
 		}
 	}
 
@@ -49,28 +49,28 @@ public class DAL {
     {
 		ResultSet rs = null;
 		try {
-			preparedStatement = connection.prepareStatement(query);
+			_preparedStatement = _connection.prepareStatement(query);
 
 			if (sqlParams != null) {
 	        	for(int i=1; i<=sqlParams.length; i++) {
 	        		switch(sqlParams[i-1].getType()) 
 	        		{
 		        		case "String":
-		        			preparedStatement.setString(i, sqlParams[i-1].getValue());
+		        			_preparedStatement.setString(i, sqlParams[i-1].getValue());
 		        			break;
 		        		case "Integer":
-		        			preparedStatement.setInt(i, Integer.parseInt(sqlParams[i-1].getValue()));
+		        			_preparedStatement.setInt(i, Integer.parseInt(sqlParams[i-1].getValue()));
 		        			break;
 		        		default:
-		        			System.out.println("RunSpReturnRs - Type " + sqlParams[i-1].getType() + " does not have support yet.");
+		        			System.out.println("DAL: RuleazaCerereReturneazaRs - Tipul " + sqlParams[i-1].getType() + " nu este implementat inca.");
 		        			break;
 	        		}
 	        	}
 	        }
 	        
-	        rs = preparedStatement.executeQuery();
+	        rs = _preparedStatement.executeQuery();
 		} catch (Exception e) {
-			System.out.println("Exception on RunQueryReturnRs: " + query);
+			System.out.println("DAL: Exceptie la RuleazaCerereReturneazaRs: " + query);
 			e.printStackTrace();
 		}
 
@@ -86,28 +86,28 @@ public class DAL {
 	{
 		ResultSet rs = null;
 		try {
-			callableStatement = connection.prepareCall(storedProcedure);
+			_callableStatement = _connection.prepareCall(storedProcedure);
 	        
 			if (sqlParams != null) {
 	        	for(int i=1; i<=sqlParams.length; i++) {
 	        		switch(sqlParams[i-1].getType()) 
 	        		{
 		        		case "String":
-		        			callableStatement.setString(i, sqlParams[i-1].getValue());
+		        			_callableStatement.setString(i, sqlParams[i-1].getValue());
 		        			break;
 		        		case "Integer":
-		        			callableStatement.setInt(i, Integer.parseInt(sqlParams[i-1].getValue()));
+		        			_callableStatement.setInt(i, Integer.parseInt(sqlParams[i-1].getValue()));
 		        			break;
 		        		default:
-		        			System.out.println("RunSpReturnRs - Type " + sqlParams[i-1].getType() + " does not have support yet.");
+		        			System.out.println("DAL: RuleazaProceduraStocataReturneazaRs - Tipul " + sqlParams[i-1].getType() + " nu este implementat inca.");
 		        			break;
 	        		}
 	        	}
 	        }
 	        
-	        rs = callableStatement.executeQuery();
+	        rs = _callableStatement.executeQuery();
 		} catch (Exception e) {
-			System.out.println("Exception on RunSpReturnRs: " + storedProcedure);
+			System.out.println("DAL: Exceptie la RuleazaProceduraStocataReturneazaRs: " + storedProcedure);
 			e.printStackTrace();
 		}
 

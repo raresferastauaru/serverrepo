@@ -43,6 +43,7 @@ public class ReceivedCommand {
 		}
 		return false;
 	}
+
 	public void appendToUserDetails(String detail) 
 	{
 		UserDetails += detail;
@@ -52,17 +53,17 @@ public class ReceivedCommand {
     {
         try
         {
-        	System.out.println(UserDetails + "\t- Geting the file: " + fileName);
+        	System.out.println(UserDetails + "\t- obtine fisierul: " + fileName);
 
             int count;
             String filePath = RootPath + fileName;
             File sourceFile = new File(filePath);
 
             if(!sourceFile.exists()) {
-                WriteToClient("Error:File doesn't exists!:");
+                WriteToClient("Error:Fisierul nu exista!:");
             }
             else if(sourceFile.isDirectory()) {
-                WriteToClient("Error:Server can't return a directory!:");
+                WriteToClient("Error:Serverul nu poate returna un director!:");
             }
             else {
 				String fileDetails = gateway.GetFileHash(fileName);
@@ -80,18 +81,18 @@ public class ReceivedCommand {
                 if(miliseconds == 0) miliseconds = 1;
 
                 long sentSize = sourceFile.length();
-                System.out.println(UserDetails + "\t- File " + fileName +
-                                    " was transferred with " + String.valueOf(sentSize / miliseconds) +
+                System.out.println(UserDetails + "\t- Fisierul " + fileName +
+                                    " a fost transferat cu " + String.valueOf(sentSize / miliseconds) +
                                     " kbps (" + String.valueOf(sentSize) + "/" + String.valueOf(miliseconds) + ").");
 
                 fileInputStream.close();
                 return true;
             }
         } catch (IOException ex) {
-            System.out.println(UserDetails + "\t- CommandGET - IOException: ");
+            System.out.println(UserDetails + "\t- ComandaOBTINE - IOException: ");
         	ex.printStackTrace();
 		} catch (Exception ex) {
-            System.out.println(UserDetails + "\t- CommandGET - Exception: ");
+            System.out.println(UserDetails + "\t- ComandaOBTINE - Exception: ");
         	ex.printStackTrace();
         }
 
@@ -102,12 +103,12 @@ public class ReceivedCommand {
 	{
 		boolean validation = false;
 		//if(notEnoughSpaceOnDisk)
-		//	WriteToClient("Error:NotEnoughSpaceOnDisk");
+		//	WriteToClient("Error:SpatiuInsuficientPeDisc");
 
 		String filePath = RootPath + fileName;
 		FileOutputStream fileOutputStream = null;
 
-		System.out.println(UserDetails + "\t- Putting the file " + fileName + " has begun (size " + bytesToRead.toString() + ").");
+		System.out.println(UserDetails + "\t- Punerea fisierului " + fileName + " a inceput (dimensiune " + bytesToRead.toString() + ").");
 
 		try
 		{
@@ -116,7 +117,7 @@ public class ReceivedCommand {
 			int storedHashCode = gateway.GetFileHashCode(fileName);
 			if(storedHashCode == fileHashCode)
 			{
-				WriteToClient("Error: the file " + fileName + "(HashCode - " + fileHashCode + ") is up to date already.");
+				WriteToClient("Error: fisierul " + fileName + "(Cod hash - " + fileHashCode + ") este deja actualizat.");
 			}
 			else
 			{
@@ -140,13 +141,13 @@ public class ReceivedCommand {
 							long miliseconds = System.currentTimeMillis() - startingTime;
 							if(miliseconds == 0) miliseconds = 1;
 
-							System.out.println(UserDetails + "\t- Transfer of file " + fileName + " is done (" + String.valueOf(bytesToRead / miliseconds) + " kbps).");
+							System.out.println(UserDetails + "\t- Transferul fisierului " + fileName + " a fost incheiat (" + String.valueOf(bytesToRead / miliseconds) + " kbps).");
 
 							readingData = false;
 						}
 						else if(bytesLeft < 0)
 						{
-							System.out.println(UserDetails + "\t- File " + fileName + " is on bytesLeft < 0. WHY ?");
+							System.out.println(UserDetails + "\t- Fisierul " + fileName + " are octetiRamasi < 0. De ce ?");
 						}
 					}
 				}
@@ -166,21 +167,21 @@ public class ReceivedCommand {
 					FileHashDetails fileHashDetails = new FileHashDetails(fileName, parts[1],parts[2],parts[3],parts[4]);
 					gateway.UpdateFileHashCode(fileHashDetails);
 
-					System.out.println(UserDetails + "\t- " + fileHashDetails.toString() + " - has been registred in database successfully.");
+					System.out.println(UserDetails + "\t- " + fileHashDetails.toString() + " - a fost inregistrat in baza de date cu succes.");
 					WriteToClient("ACKNOWLEDGE:");
 					WriteToClient("EOCR:");
 				}
 				else
 				{
-					WriteToClient("Error:FileHash wasn't sent succesfully.:");
+					WriteToClient("Error:Detaliile inregistrarilor fisierului nu au putut fi transferate cu succes.:");
 				}
 
 				validation = true;
 			}
 		} catch (IOException ex) {
-			System.out.println(UserDetails + "\t- CommandPUT: IOException: " + ex);
+			System.out.println(UserDetails + "\t- ComandaPUNE: IOException: " + ex);
 		} catch (InterruptedException ex) {
-			System.out.println(UserDetails + "\t- CommandPUT: InterruptedException: " + ex);
+			System.out.println(UserDetails + "\t- ComandaPUNE: InterruptedException: " + ex);
 		} finally {
 			try {
 				if (fileOutputStream != null)
@@ -201,7 +202,7 @@ public class ReceivedCommand {
 			
 	        if(newFile.exists())
 	        {
-	            WriteToClient("Error:Can't rename the file <" + oldFileName + "> to <" + newFileName + "> because a file with the new desired name already exists!:");
+	            WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redefinit la <" + newFileName + "> pentru ca numele dorit deja exista!:");
 	            return false;
 	        }
 			
@@ -214,12 +215,12 @@ public class ReceivedCommand {
 					if(newFile.isDirectory())
 					{
 					  gateway.UpdateFileHashRelativePath(oldFileName, newFileName, true);
-					  System.out.println(UserDetails + "\t- Folder " + oldFileName + " was successfully renamed to " + newFileName);
+					  System.out.println(UserDetails + "\t- Directorul " + oldFileName + " a fost redenumit cu succes la " + newFileName);
 					}
 					else
 					{
 					  gateway.UpdateFileHashRelativePath(oldFileName, newFileName, false);
-					  System.out.println(UserDetails + "\t- File " + oldFileName + " was successfully renamed to " + newFileName);
+					  System.out.println(UserDetails + "\t- Fisierul " + oldFileName + " a fost redenumit cu succes la " + newFileName);
 					}
 
 					WriteToClient("ACKNOWLEDGE:");
@@ -227,15 +228,16 @@ public class ReceivedCommand {
 					return true;
 	            }
 
-	            WriteToClient("Error:failed to rename the file " + oldFileName + " to " + newFileName + ".:");
+	            WriteToClient("Error:Esec la redenumirea fisierului " + oldFileName + " la " + newFileName + ".:");
 	            return false;
 	        }
 			else
 			{
-				WriteToClient("Error:can't rename the file <" + oldFileName + "> to <" + newFileName + "> because it doesn't exist.:");
+				WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redefinit la <" + newFileName + "> pentru ca nu exista.:");
 			}
 	    } catch (Exception ex) {
-            System.out.println(UserDetails + "\t- CommandPUT: " + ex);
+            System.out.println(UserDetails + "\t- ComandaREDENUMESTE - Exception: ");
+            ex.printStackTrace();
 	    }
 		
 		return false;
@@ -254,14 +256,14 @@ public class ReceivedCommand {
 					boolean directoryDeleted = DeleteDirectory(fileToDelete);
 					if(directoryDeleted)
 					{
-						gateway.DeleteFileHashCode(fileName, true);
-						System.out.println(UserDetails + "\t- Succesfully deleted directory: " + fileName + " and all the files that it contained." );
+						gateway.DeleteFileHash(fileName, true);
+						System.out.println(UserDetails + "\t- Directorul " + fileName + " a fost sters cu succes (inclusiv continutul acestuia)." );
 						WriteToClient("ACKNOWLEDGE:");
 						//WriteToClient("EOCR:");
 					}
 					else
 					{
-						WriteToClient("Error:failed to delete directory " + fileToDelete + ".:");
+						WriteToClient("Error:Esec la stergerea directorului " + fileToDelete + ".:");
 					}
 
 					return directoryDeleted;
@@ -271,26 +273,28 @@ public class ReceivedCommand {
 					boolean fileDeleted = fileToDelete.delete();
 					if(fileDeleted)
 					{
-						gateway.DeleteFileHashCode(fileName, false);
-						System.out.println(UserDetails + "\t- Succesfully deleted file: " + fileName + "." );
+						gateway.DeleteFileHash(fileName, false);
+						System.out.println(UserDetails + "\t- Fisierul " + fileName + " a fost sters cu succes." );
 						WriteToClient("ACKNOWLEDGE:");
 					}
 					else
 					{
-						WriteToClient("Error:failed to delete file " + fileToDelete + ".:");
+						WriteToClient("Error:Esec la stergerea fisierului " + fileToDelete + ".:");
 					}
 					return fileDeleted;
 				}
 			}
 			else 
 			{
-				WriteToClient("Error: file " + fileToDelete + " is already deleted on server.:");
+				WriteToClient("Error:Fisierul " + fileToDelete + " este deja sters pe server.:");
 				return false;
 			}
         }
         catch (Exception ex)
         {
             WriteToClient("Error:" + ex.getMessage() + ".:");
+            System.out.println(UserDetails + "\t- CommandSTERGE - Exception: ");
+            ex.printStackTrace();
             return false;
         }
     }
@@ -307,15 +311,16 @@ public class ReceivedCommand {
 
             if(directoryCreated)
             {
-            	System.out.println(UserDetails + "\t- Directory " + fullPath + " was created successfully.");
+            	System.out.println(UserDetails + "\t- Directorul " + fullPath + " a fost creat cu succes.");
                 WriteToClient("ACKNOWLEDGE:");
             }
             else
             {
-                WriteToClient("Error:Failed to create directory " + folderName + ".:");
+                WriteToClient("Error:Esec la crearea directorului " + folderName + ".:");
             }
         }catch(Exception e){
-           e.printStackTrace();
+            System.out.println(UserDetails + "\t- CRDIRECTOR - Exception: ");
+			e.printStackTrace();
         }
 
         return directoryCreated;
@@ -326,7 +331,7 @@ public class ReceivedCommand {
 		boolean validation = false;
         try
         {
-            System.out.println(UserDetails + "\t- Geting all the FileHashes.");
+            System.out.println(UserDetails + "\t- Obtine toate InregistrarileFisierelor pentru sincronizarea initiala.");
             String fileHashes = gateway.GetAllFileHashesForUser();
 	
 			// Does it really send it all ?!
@@ -344,13 +349,14 @@ public class ReceivedCommand {
 				
 			WriteToClient(":EOCR:");
         } catch (Exception ex) {
-            System.out.println(UserDetails + "\t- CommandGETFileHashes: " + ex);
+            System.out.println(UserDetails + "\t- CommandOBTINEInregistrarileFisierelor - Exception: ");
+            ex.printStackTrace();
         }
 
         return validation;
     }
 
-    public void AppendUsedToAssociatedEntities(String userName)
+    public void AppendUserToAssociatedEntities(String userName)
     {
 		String hostName;
 		String ipAddress;
@@ -360,7 +366,7 @@ public class ReceivedCommand {
 			hostName = 	InetAddress.getLocalHost().getHostName();		
 			ipAddress = InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException ex) {
-			System.out.println("On AppendUsedToAssociatedEntities:");
+			System.out.println(UserDetails + "\t - AdaugaUtilizatorLaEntitatileAsociate - UnknownHostException:");
 			ex.printStackTrace();
 			return;
 		}
@@ -374,7 +380,7 @@ public class ReceivedCommand {
 		try	{
 			ipAddress = InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException ex) {
-			System.out.println("On RemoveUserFromAssociatedEntities:");
+			System.out.println(UserDetails + "\t - StergeUtilizatorDinEntitatileAsociate - UnknownHostException:");
 			ex.printStackTrace();
 			return;
 		}
@@ -393,6 +399,7 @@ public class ReceivedCommand {
             socketOutputStream.write(messageBytes, 0, messageBytes.length);
         }
         catch(Exception ex){
+			System.out.println(UserDetails + "\t - ScrieCatreClient - Exception:");
             System.out.println(ex.getMessage());
         }
     }

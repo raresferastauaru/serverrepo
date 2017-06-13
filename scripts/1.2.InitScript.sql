@@ -10,8 +10,8 @@ CREATE TABLE MyCloudDB.Users
 CREATE TABLE MyCloudDB.FileHashes
 (
 	HashId 				INT 				AUTO_INCREMENT PRIMARY KEY,
-	RelativePath 		NVARCHAR(255) 		NOT NULL,
-	OldRelativePath 	NVARCHAR(255) 		NOT NULL,
+	RelativePath 		NVARCHAR(512) 		NOT NULL,
+	OldRelativePath 	NVARCHAR(512) 		NOT NULL,
 	HashCode 			INT 				NOT NULL,
 	OldHashCode 		INT 				NOT NULL,
 	UserId 				INT 				NOT NULL,

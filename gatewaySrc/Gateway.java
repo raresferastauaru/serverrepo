@@ -5,21 +5,23 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 
 public class Gateway {
-    private static int socketNo = 4445;
-    private static ServerSocket serverSocket = null;
-    private static InputStream socketInputStream = null;
-    private static OutputStream socketOutputStream = null;
 
     private static DAL _dal;
     private static OdroidNode _userAlreadyConnectedOn;
     private static OdroidNode _lowestLoadedOdroid;
 
     public static void main(String[] args) throws Exception {
+
+		int socketNo = 4445;
+		ServerSocket serverSocket = null;
+		InputStream socketInputStream = null;
+		OutputStream socketOutputStream = null;
+
         try {
             serverSocket = new ServerSocket(socketNo);
-            System.out.println("Server socket " + socketNo + " is open. (" + (new Date()).toString() + ")");
+            System.out.println("Aplicatia Gateway a deschis un ServerSocket pe portul " + socketNo + ". (" + (new Date()).toString() + ")");
         } catch (IOException ex) {
-            System.out.println("Can't setup server on port " + socketNo + ".");
+            System.out.println("Aplicatia Gateway nu poate porni un ServerSocket pe portul " + socketNo + ". (" + (new Date()).toString() + ")");
         }
 
         _dal = new DAL();
@@ -39,7 +41,7 @@ public class Gateway {
                 OdroidNode selectedNode = GetAvailableOdroidNode(userName);
                 socketOutputStream.write(selectedNode.getOdroidNodeInfos(), 0, selectedNode.getOdroidNodeInfos().length);
                 
-        		System.out.println("User <" + userName + "> was associated to node <" +  selectedNode.getName() + ">.");
+        		System.out.println("Utilizatorul <" + userName + "> a fost asociat cu nodul <" +  selectedNode.getName() + ">.");
 			}			
 			catch (Exception ex) 
 			{
@@ -84,7 +86,7 @@ public class Gateway {
 				_lowestLoadedOdroid = new OdroidNode("Odroid1", "192.168.100.31", "4444");
 			}
         } catch (SQLException e) {
-            System.out.println("SQLException on RefreshAssociatedEntitiesInfos: progressing the ResultSet");
+            System.out.println("Exceptie SQL la ReincarcaEntitatileAsociate: procesarea ResultSet-ului");
             e.printStackTrace();
         }
     }

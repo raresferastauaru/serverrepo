@@ -32,7 +32,7 @@ public class Gateway {
 									rs.getString("IsDeleted") + "|";
 			}
 		} catch (SQLException e) {
-			System.out.println("SQLException on GetFileHashes: progressing the ResultSet");
+			System.out.println("PortalOperatiiDB: SQLException la GetFileHashes: procesarea ResultSet-ului");
 			e.printStackTrace();
 		}
 
@@ -56,8 +56,8 @@ public class Gateway {
 							+ rs.getString("IsReadOnly");
 		
 		} catch (SQLException e) {
-			System.out.println("SQLException on GetFileHash: progressing the ResultSet");
-			System.out.println("Message: " + e.getMessage());
+			System.out.println("PortalOperatiiDB: SQLException la GetFileHash: procesarea ResultSet-ului");
+			System.out.println("Mesaj: " + e.getMessage());
 		}
 
 		return fileHashString;
@@ -78,7 +78,7 @@ public class Gateway {
 				return Integer.parseInt(rs.getString("HashCode"));
 			}
 		} catch (SQLException e) {
-			System.out.println("SQLException on GetFileHashCode: progressing the ResultSet");
+			System.out.println("PortalOperatiiDB: SQLException la GetFileHashCode: procesarea ResultSet-ului");
 			e.printStackTrace();
 		}
 		return 0;
@@ -113,31 +113,31 @@ public class Gateway {
 		if(isDirectory) 
 		{
 			_dal.RunSpReturnRs(updateFileHashDirectoryRelativePathStoredProcedure, sqlParams);
-			System.out.println("Directory " + oldRelativePath + " renamed in database succesfully to " + newRelativePath + ".");
+			System.out.println("Directorul " + oldRelativePath + " redenumit cu succes la " + newRelativePath + " in baza de date.");
 		}
 		else
 		{			
 			_dal.RunSpReturnRs(updateFileHashRelativePathStoredProcedure, sqlParams);
-			System.out.println("File " + oldRelativePath + " renamed in database succesfully to " + newRelativePath + ".");
+			System.out.println("Fisierul " + oldRelativePath + " redenumit cu succes la " + newRelativePath + " in baza de date.");
 		}
 	}
 	
 	// DELETE FILE HASHCODE
-	private String deleteFileHashCodeQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath = ? AND UserId = ?";
-	private String deleteDirectoryHashCodesQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath LIKE ? AND UserId = ?";
-	public void DeleteFileHashCode(String relativePath, boolean isDirectory) {
+	private String deleteFileHashQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath = ? AND UserId = ?";
+	private String deleteDirectoryHashQuery = "UPDATE FileHashes SET IsDeleted=1 WHERE RelativePath LIKE ? AND UserId = ?";
+	public void DeleteFileHash(String relativePath, boolean isDirectory) {
 		SqlParam[] sqlParams = new SqlParam[2];
 		sqlParams[1] = new SqlParam("Integer", USERID);
 		
 		if(isDirectory)
 		{
 			sqlParams[0] = new SqlParam("String", relativePath + '%');
-			_dal.RunQueryReturnRs(deleteDirectoryHashCodesQuery, sqlParams);
+			_dal.RunQueryReturnRs(deleteDirectoryHashQuery, sqlParams);
 		}
 		else
 		{
 			sqlParams[0] = new SqlParam("String", relativePath);
-			_dal.RunQueryReturnRs(deleteFileHashCodeQuery, sqlParams);
+			_dal.RunQueryReturnRs(deleteFileHashQuery, sqlParams);
 		}
 	}
 	
@@ -164,20 +164,10 @@ public class Gateway {
 				return true;
 			}
 		} catch (SQLException ex) {
+			System.out.println("PortalOperatiiDB: SQLException la ValidateConnectedUser: procesarea ResultSet-ului");
 			ex.printStackTrace();
 		}
 		return false;
-	}
-	
-		
-	private String insertUserQuery = "INSERT INTO Users(UserName, UserPassword) VALUES(?, ?)";
-	public void InsertNewUser(String userName, String userPassword)
-	{
-		SqlParam[] sqlParams = new SqlParam[2];
-		sqlParams[0] = new SqlParam("String", userName);
-		sqlParams[1] = new SqlParam("String", userPassword);
-		
-		_dal.RunQueryReturnRs(insertUserQuery, sqlParams);
 	}
 	
 	private String getUsersPasswordQuery = "SELECT UserPassword FROM Users WHERE UserName = ?";
@@ -208,10 +198,10 @@ public class Gateway {
 
 	// Subscribe from the list of Associadet Entities
 	private String deleteAssociatedEntitiesQuery = "DELETE FROM AssociatedEntities WHERE OdroidIP = ? AND UserName = ? LIMIT 1";
-	public void DeleteAssociatedEntities(String ipAddress, String userName)
+	public void DeleteAssociatedEntities(String odroidIP, String userName)
 	{
 		SqlParam[] sqlParams = new SqlParam[2];
-		sqlParams[0] = new SqlParam("String", ipAddress);
+		sqlParams[0] = new SqlParam("String", odroidIP);
 		sqlParams[1] = new SqlParam("String", userName);
 		
 		_dal.RunQueryReturnRs(deleteAssociatedEntitiesQuery, sqlParams);
