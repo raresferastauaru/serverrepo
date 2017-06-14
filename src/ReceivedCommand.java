@@ -117,7 +117,7 @@ public class ReceivedCommand {
 			int storedHashCode = gateway.GetFileHashCode(fileName);
 			if(storedHashCode == fileHashCode)
 			{
-				WriteToClient("Error: fisierul " + fileName + "(Cod hash - " + fileHashCode + ") este deja actualizat.");
+				WriteToClient("Error:<Warning> Fisierul " + fileName + "(Cod hash - " + fileHashCode + ") este deja actualizat.");
 			}
 			else
 			{
@@ -202,7 +202,7 @@ public class ReceivedCommand {
 			
 	        if(newFile.exists())
 	        {
-	            WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca numele dorit deja exista!:");
+	            WriteToClient("Error:<Warning> Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca numele dorit deja exista!:");
 	            return false;
 	        }
 			
@@ -228,12 +228,12 @@ public class ReceivedCommand {
 					return true;
 	            }
 
-	            WriteToClient("Error:Esec la redenumirea fisierului " + oldFileName + " la " + newFileName + ".:");
+	            WriteToClient("Error:<Warning> Esec la redenumirea fisierului " + oldFileName + " la " + newFileName + ".:");
 	            return false;
 	        }
 			else
 			{
-				WriteToClient("Error:Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca nu exista.:");
+				WriteToClient("Error:<Warning> Fisierul <" + oldFileName + "> nu poate fi redenumit la <" + newFileName + "> pentru ca nu exista.:");
 			}
 	    } catch (Exception ex) {
             System.out.println(UserDetails + "\t- ComandaREDENUMESTE - Exception: ");
@@ -259,7 +259,6 @@ public class ReceivedCommand {
 						gateway.DeleteFileHash(fileName, true);
 						System.out.println(UserDetails + "\t- Directorul " + fileName + " a fost sters cu succes (inclusiv continutul acestuia)." );
 						WriteToClient("ACKNOWLEDGE:");
-						//WriteToClient("EOCR:");
 					}
 					else
 					{
@@ -279,14 +278,14 @@ public class ReceivedCommand {
 					}
 					else
 					{
-						WriteToClient("Error:Esec la stergerea fisierului " + fileToDelete + ".:");
+						WriteToClient("Error:<Warning> Esec la stergerea fisierului " + fileToDelete + ".:");
 					}
 					return fileDeleted;
 				}
 			}
 			else 
 			{
-				WriteToClient("Error:Fisierul " + fileToDelete + " este deja sters pe server.:");
+				WriteToClient("Error:<Warning> Fisierul " + fileToDelete + " este deja sters pe server.:");
 				return false;
 			}
         }
@@ -316,7 +315,7 @@ public class ReceivedCommand {
             }
             else
             {
-                WriteToClient("Error:Esec la crearea directorului " + folderName + ".:");
+                WriteToClient("Error:<Warning> Esec la crearea directorului " + folderName + ".:");
             }
         }catch(Exception e){
             System.out.println(UserDetails + "\t- CRDIRECTOR - Exception: ");
