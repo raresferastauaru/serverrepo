@@ -155,7 +155,7 @@ public class Gateway {
 		ResultSet rs = _dal.RunQueryReturnRs(selectConnectedUser, sqlParams);
 		
 		try {
-			if(if(rs.first())
+			if(rs.first())
             {
 				String encryptedPassword = rs.getString("UserPassword");
 				boolean userValid = Sha2Helper.verify(userPassword, encryptedPassword);
