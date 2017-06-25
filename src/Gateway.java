@@ -155,14 +155,20 @@ public class Gateway {
 		ResultSet rs = _dal.RunQueryReturnRs(selectConnectedUser, sqlParams);
 		
 		try {
-			rs.next();
-			String encryptedPassword = rs.getString("UserPassword");
-			boolean userValid = Sha2Helper.verify(userPassword, encryptedPassword);
-			
-			if(userValid) {
-				USERID = rs.getString("UserId");
-				return true;
+			if(if(rs.first())
+            {
+				String encryptedPassword = rs.getString("UserPassword");
+				boolean userValid = Sha2Helper.verify(userPassword, encryptedPassword);
+				
+				if(userValid) {
+					USERID = rs.getString("UserId");
+					return true;
+				}
 			}
+			else
+			{
+				return false;
+			}			
 		} catch (SQLException ex) {
 			System.out.println("PortalOperatiiDB: SQLException la ValidateConnectedUser: procesarea ResultSet-ului");
 			ex.printStackTrace();
